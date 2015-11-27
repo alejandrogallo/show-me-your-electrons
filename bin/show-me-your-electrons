@@ -1,0 +1,8 @@
+#! /usr/bin/env python
+
+import smye
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.parse_args()
+
