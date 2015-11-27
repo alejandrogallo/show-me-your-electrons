@@ -9,5 +9,3 @@ setup(name="Show me your electrons",
     packages=["smye"],
     test_suite="smye.tests",
     zip_safe=False)
-
-#tests_require=["nose"],
