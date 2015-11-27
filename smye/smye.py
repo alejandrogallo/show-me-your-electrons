@@ -7,6 +7,7 @@ class Diagram(object):
         self.filePath = filePath
         self.verbose = VERBOSE
         self.spin = spin
+        self.spinOccupation=False
     def vprint(self, something, err=False):
         if self.verbose:
             if not err :
@@ -45,7 +46,7 @@ class Diagram(object):
                     self.vprint("There was a problem parsing the information for spin %s"%(spin), True)
                 else:
                     self.spinOccupation[spin]=self._parseElectronicConfiguration(lastSpinBufferCleaned[0])
-                    print self.spinOccupation[spin]
+                    #print self.spinOccupation[spin]
         return self.spinOccupation
     def _parseElectronicConfiguration(self, string):
         """ 
@@ -71,6 +72,21 @@ class Diagram(object):
     def getConfiguration(self):
         return self._parseFile()
     def showASCII(self):
-        pass
+        if self.spin:
+            if self.spinOccupation:
+                nelectrons = min(len(self.spinOccupation["1"]), len(self.spinOccupation["2"]))
+                for i in range(nelectrons-1,-1,-1):
+                    niveau1 = self.spinOccupation["1"][i]
+                    niveau2 = self.spinOccupation["2"][i]
+                    if niveau1["number"]==niveau2["number"]==str(i):
+                        occupation1 = abs(float(niveau1["occupation"]))
+                        occupation2 = abs(float(niveau2["occupation"]))
+                        occupiedSymbol=""
+                        if occupation1 or occupation2: 
+                            occupiedSymbol="+"
+                        print("%s.\t[%.1f][%.1f]  (%s) \t %s"%(i, occupation1, occupation2, niveau1["energy"], occupiedSymbol ))
+
+            else:
+                self.vprint("To show ASCII representation you first have to generate read the electron configuration", True)
     def showHTML(self):
         pass
