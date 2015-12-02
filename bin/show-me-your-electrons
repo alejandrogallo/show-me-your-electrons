@@ -28,6 +28,6 @@ diagram.getConfiguration()
 
 
 if args.ascii:
-    print("Doing somethin in ascii..")
+    print("Displaying contents of %s in ascii"%args.file)
     diagram.showASCII()
 
