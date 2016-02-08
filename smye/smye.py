@@ -95,10 +95,58 @@ class Diagram(object):
             newIndex = lastIndex - n
             self.vprint("Got it with index %s"%newIndex)
             return self.spinOccupation[spin][newIndex]
-    def getNthExcitedState_abs(self, n):
+    def _geq(self, state1, state2):
+        """
+        Compares the energy of two states
+        """
+        if float(state1["energy"])>=float(state2["energy"]):
+            return True
+        else:
+            return False
+    def getNLastExcitedStates(self, n):
+        """
+        *        
+        *        
+        *  +     
+           +     
+                 
+        *        
+        *        
+        """
+        classified_states = []
+        get = "both"
+        j = 0
+        k = 0
+        # init = True
         for i in range(0,n):
-            for spin in ["1", "2"]:
-                pass
+            if get == "1" or get == "both":
+                if get == "both":
+                    self.vprint("init")
+                    last = self.getNthExcitedState(k, "2")
+                    last["spin"] = "2";
+                    spin_last = "2"
+                    k+=1;
+                new = self.getNthExcitedState(j, "1")
+                new["spin"] = "1";
+                spin_new = "1"
+                j+=1;
+            else:
+                new = self.getNthExcitedState(k, "2")
+                new["spin"] = "2";
+                spin_new = "2"
+                k+=1;
+            self.vprint("new %s"%new)
+            self.vprint("last %s"%last)
+            if self._geq(new, last):
+                classified_states.append(new)
+                get  = spin_new
+            else:
+                self.vprint("change")
+                classified_states.append(last)
+                last = new
+                get  = spin_last
+                spin_last = spin_new
+        return classified_states
     def getNthExcitedEnergy(self, n, spin):
         state = self.getNthExcitedState(n,spin)
         self.vprint("Getting energy for electrinic state %s"%state)
