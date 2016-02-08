@@ -51,7 +51,7 @@ class Diagram(object):
     def _parseElectronicConfiguration(self, string):
         """ 
             This function parses the electronic configuration from a string (fileBuffer)
-            The format of the string should be a table with the following columns: 
+            The format of the string should be a table with the following columns:
                 electron_number     electron_energy     electron_occupation
         """
         import re 
@@ -69,6 +69,35 @@ class Diagram(object):
                 else: 
                     break
         return result
+    def getLastOccuppiedStates(self, configuration):
+        """
+        Returns a dict
+            {"valence":occupancy, "conduction":last}
+        with the valence state and the conduction (first unoccupied state) state
+        """
+        self.vprint("Getting extremal states ...")
+        last = None
+        for occupancy in configuration[1:]:
+            if float(occupancy["occupation"]) <.5:
+                self.vprint("Found extremal states:")
+                self.vprint("\tValence state: %s"%last)
+                self.vprint("\tConduction state: %s"%occupancy)
+                return {"valence":last, "conduction":occupancy}
+            last = occupancy
+    def getBandGap(self):
+        if self.spin:
+            self.vprint("Getting band gap for the case of two spins...");
+            general_bandgap = []
+            configuration = self.getConfiguration();
+            for spin in configuration:
+                self.vprint("Getting bandgap information for spin %s"%spin)
+                states = self.getLastOccuppiedStates(configuration[spin])
+                valence = states["valence"]
+                conduction = states["conduction"]
+                bandgap = float(conduction["energy"])-float(valence["energy"])
+                self.vprint("Band_gap_spin_%s %s"%(spin, bandgap ))
+                general_bandgap+=[ bandgap ]
+            return min(general_bandgap)
     def getConfiguration(self):
         return self._parseFile()
     def showASCII(self):
