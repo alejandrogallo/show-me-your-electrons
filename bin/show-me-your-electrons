@@ -33,4 +33,4 @@ if args.ascii:
     diagram.showASCII()
 
 if args.gap:
-    print diagram.getBandGap();
+    diagram.getBandGap();

@@ -87,17 +87,27 @@ class Diagram(object):
     def getBandGap(self):
         if self.spin:
             self.vprint("Getting band gap for the case of two spins...");
-            general_bandgap = []
-            configuration = self.getConfiguration();
+            configuration     = self.getConfiguration();
+            valence_states    = []
+            conduction_states = []
             for spin in configuration:
                 self.vprint("Getting bandgap information for spin %s"%spin)
-                states = self.getLastOccuppiedStates(configuration[spin])
-                valence = states["valence"]
-                conduction = states["conduction"]
-                bandgap = float(conduction["energy"])-float(valence["energy"])
-                self.vprint("Band_gap_spin_%s %s"%(spin, bandgap ))
-                general_bandgap+=[ bandgap ]
-            return min(general_bandgap)
+                states             = self.getLastOccuppiedStates(configuration[spin])
+                valence_states    += [ states["valence"] ]
+                conduction_states += [ states["conduction"] ]
+            if float( valence_states[0]["energy"] ) > float( valence_states[1]["energy"] ):
+                valence = valence_states[0]
+            else:
+                valence = valence_states[1]
+            if float( conduction_states[0]["energy"] ) < float( conduction_states[1]["energy"] ):
+                conduction = conduction_states[0]
+            else:
+                conduction = conduction_states[1]
+            general_bandgap = float(conduction["energy"]) - float(valence["energy"])
+            print("VB %s"%valence["energy"])
+            print("LB %s"%conduction["energy"])
+            print("BG %s"%(general_bandgap))
+            return (general_bandgap)
     def getConfiguration(self):
         return self._parseFile()
     def showASCII(self):
