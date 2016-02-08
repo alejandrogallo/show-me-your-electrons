@@ -34,7 +34,7 @@ class Diagram(object):
             self.vprint("Parsing information for spin %s"%spin)
             # The separators tell you up until which characters the spin part goes
             # For spin component 1, the information goes until the text spin component 2 is found
-            # For spin component 2, the information goes until the ------ line is found 
+            # For spin component 2, the information goes until the ------ line is found
             spinBuffer = fileBuffer.split("spin component %s"%spin)
             if len(spinBuffer)==1:
                 self.vprint("There is no 'spin component %s' part in file %s"%(spin, self.filePath), True)
@@ -42,19 +42,19 @@ class Diagram(object):
             else:
                 lastSpinBuffer = spinBuffer[-1]
                 lastSpinBufferCleaned = lastSpinBuffer.split(separator[spin])
-                if len(lastSpinBufferCleaned)==1:    
+                if len(lastSpinBufferCleaned)==1:
                     self.vprint("There was a problem parsing the information for spin %s"%(spin), True)
                 else:
                     self.spinOccupation[spin]=self._parseElectronicConfiguration(lastSpinBufferCleaned[0])
                     #print self.spinOccupation[spin]
         return self.spinOccupation
     def _parseElectronicConfiguration(self, string):
-        """ 
+        """
             This function parses the electronic configuration from a string (fileBuffer)
             The format of the string should be a table with the following columns:
                 electron_number     electron_energy     electron_occupation
         """
-        import re 
+        import re
         result = []
         p = re.compile("(\-?\d+\.?\d*)\s+(\-?\d+\.?\d*)\s+(\-?\d+\.?\d*)")
         stringLines = string.split("\n")
@@ -66,7 +66,7 @@ class Diagram(object):
                     niveau = match[0]
                     result.append({"number": niveau[0], "energy":niveau[1], "occupation":niveau[2]})
                     #print niveaus
-                else: 
+                else:
                     break
         return result
     def getLastOccuppiedStates(self, configuration):
@@ -111,7 +111,7 @@ class Diagram(object):
                         occupation1 = abs(float(niveau1["occupation"]))
                         occupation2 = abs(float(niveau2["occupation"]))
                         occupiedSymbol=""
-                        if occupation1 or occupation2: 
+                        if occupation1 or occupation2:
                             occupiedSymbol="+"
                         print("%s.\t[%.1f][%.1f]  (%s) \t %s"%(i, occupation1, occupation2, niveau1["energy"], occupiedSymbol ))
 
