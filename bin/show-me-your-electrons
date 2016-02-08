@@ -10,6 +10,8 @@ parser.add_argument("file", help="Input file in OUTCAR format")
 parser.add_argument("-v", "--verbose", help="Make the output verbose", action="store_true")
 parser.add_argument("--ascii", help="Print the electron configuration in ascii format", action="store_true")
 parser.add_argument("-g", "--gap", help="Get band gap", action="store_true")
+parser.add_argument("-n", "--excited", help="Get nth excited energy (from above)", action="store")
+parser.add_argument("-s", "--spin", help="Together with -n, spin channel (1 or 2)", action="store")
 
 
 args = parser.parse_args()
@@ -34,3 +36,6 @@ if args.ascii:
 
 if args.gap:
     diagram.getBandGap();
+
+if args.excited and args.spin:
+    diagram.getNthExcitedEnergy(int(args.excited), args.spin)

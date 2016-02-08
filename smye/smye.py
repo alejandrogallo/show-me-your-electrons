@@ -69,7 +69,7 @@ class Diagram(object):
                 else:
                     break
         return result
-    def getLastOccuppiedStates(self, configuration):
+    def getLastOccuppiedStates(self, spin):
         """
         Returns a dict
             {"valence":occupancy, "conduction":last}
@@ -77,22 +77,37 @@ class Diagram(object):
         """
         self.vprint("Getting extremal states ...")
         last = None
-        for occupancy in configuration[1:]:
+        configuration = self.spinOccupation[spin]
+        for index, occupancy in enumerate(configuration[1:]):
             if float(occupancy["occupation"]) <.5:
                 self.vprint("Found extremal states:")
                 self.vprint("\tValence state: %s"%last)
                 self.vprint("\tConduction state: %s"%occupancy)
-                return {"valence":last, "conduction":occupancy}
+                return {"valence":last, "conduction":occupancy, "index": index}
             last = occupancy
+    def getNthExcitedState(self, n, spin):
+        if self.spin:
+            if not spin in ["1","2"]:
+                print("Spin must be either 1 or 2")
+                sys.exit(1)
+            self.vprint("Getting %sth excited state for spin %s"%(n,spin))
+            lastIndex = self.getLastOccuppiedStates(spin)["index"]
+            newIndex = lastIndex - n
+            self.vprint("Got it with index %s"%newIndex)
+            return self.spinOccupation[spin][newIndex]
+    def getNthExcitedEnergy(self, n, spin):
+        state = self.getNthExcitedState(n,spin)
+        self.vprint("Getting energy for electrinic state %s"%state)
+        print(state["energy"])
     def getBandGap(self):
         if self.spin:
             self.vprint("Getting band gap for the case of two spins...");
-            configuration     = self.getConfiguration();
+            configuration     = self.spinOccupation;
             valence_states    = []
             conduction_states = []
             for spin in configuration:
                 self.vprint("Getting bandgap information for spin %s"%spin)
-                states             = self.getLastOccuppiedStates(configuration[spin])
+                states             = self.getLastOccuppiedStates(spin)
                 valence_states    += [ states["valence"] ]
                 conduction_states += [ states["conduction"] ]
             if float( valence_states[0]["energy"] ) > float( valence_states[1]["energy"] ):
