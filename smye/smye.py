@@ -95,6 +95,10 @@ class Diagram(object):
             newIndex = lastIndex - n
             self.vprint("Got it with index %s"%newIndex)
             return self.spinOccupation[spin][newIndex]
+    def getNthExcitedState_abs(self, n):
+        for i in range(0,n):
+            for spin in ["1", "2"]:
+                pass
     def getNthExcitedEnergy(self, n, spin):
         state = self.getNthExcitedState(n,spin)
         self.vprint("Getting energy for electrinic state %s"%state)
