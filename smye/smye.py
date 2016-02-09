@@ -75,26 +75,19 @@ class Diagram(object):
             {"valence":occupancy, "conduction":last}
         with the valence state and the conduction (first unoccupied state) state
         """
-        self.vprint("Getting extremal states ...")
-        last = None
-        configuration = self.spinOccupation[spin]
-        for index, occupancy in enumerate(configuration[1:]):
-            if float(occupancy["occupation"]) <.5:
-                self.vprint("Found extremal states:")
-                self.vprint("\tValence state: %s"%last)
-                self.vprint("\tConduction state: %s"%occupancy)
-                return {"valence":last, "conduction":occupancy, "index": index}
-            last = occupancy
+        self.vprint("Getting last occupied state ...")
+        return self.getNthExcitedState(1,spin)
     def getNthExcitedState(self, n, spin):
         if self.spin:
             if not spin in ["1","2"]:
                 print("Spin must be either 1 or 2")
                 sys.exit(1)
-            self.vprint("Getting %sth excited state for spin %s"%(n,spin))
-            lastIndex = self.getLastOccuppiedStates(spin)["index"]
-            newIndex = lastIndex - n
-            self.vprint("Got it with index %s"%newIndex)
-            return self.spinOccupation[spin][newIndex]
+            spin_configuration = self.spinOccupation[spin]
+            occupied_states = []
+            for state in spin_configuration:
+                if float(state["occupation"]):
+                    occupied_states.append(state)
+            return occupied_states[-n]
     def _geq(self, state1, state2):
         """
         Compares the energy of two states
@@ -115,10 +108,10 @@ class Diagram(object):
         """
         classified_states = []
         get = "both"
-        j = 0
-        k = 0
+        j = 1
+        k = 1
         # init = True
-        for i in range(0,n):
+        for i in range(1,n+1):
             if get == "1" or get == "both":
                 if get == "both":
                     self.vprint("init")
