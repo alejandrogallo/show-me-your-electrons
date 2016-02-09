@@ -146,7 +146,7 @@ class Diagram(object):
             print("%s %s"%(state["spin"], state["energy"]))
     def getAllLastNStates(self, down_offset, up_offset=0):
         last = self.getNLastExcitedStates(1)[0]
-        print last
+        # print last
         lastIndex = last["number"]
         # now get everything down_offset underneath
         result_states = []
