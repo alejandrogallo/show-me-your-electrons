@@ -43,5 +43,5 @@ if args.excited and args.spin:
     print("both")
 else:
     if args.excited:
-        print diagram.getNLastExcitedStates(args.excited)
+        diagram.printNLastExcitedStates(args.excited)
 

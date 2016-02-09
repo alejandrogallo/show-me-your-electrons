@@ -147,6 +147,11 @@ class Diagram(object):
                 get  = spin_last
                 spin_last = spin_new
         return classified_states
+    def printNLastExcitedStates(self, n):
+        states = self.getNLastExcitedStates(n)
+        for state in states:
+            print("%s %s"%(state["spin"], state["energy"]))
+
     def getNthExcitedEnergy(self, n, spin):
         state = self.getNthExcitedState(n,spin)
         self.vprint("Getting energy for electrinic state %s"%state)
