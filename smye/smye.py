@@ -111,7 +111,7 @@ class Diagram(object):
         j = 1
         k = 1
         # init = True
-        for i in range(1,n+1):
+        for i in range(1,int(n)+1):
             if get == "1" or get == "both":
                 if get == "both":
                     self.vprint("init")
@@ -149,15 +149,32 @@ class Diagram(object):
         state = self.getNthExcitedState(n,spin)
         self.vprint("Getting energy for electrinic state %s"%state)
         print(state["energy"])
+    def getStateByIndex(self, spin, index):
+        for state in self.spinOccupation[spin]:
+            if float(state["number"]) == float(index):
+                return state
+        return None
+    def getValenceStates(self, spin):
+        valence = self.getLastOccuppiedStates( spin )
+        # print("VALENCE")
+        # print(valence)
+        lastIndex = valence["number"]
+        condIndex = int(lastIndex)+1
+        conduction = self.getStateByIndex(spin, condIndex)
+        if conduction:
+            return {"valence": valence, "conduction": conduction}
+        else:
+            raise Exception("Conduction state was not found!")
+            return False
     def getBandGap(self):
         if self.spin:
             self.vprint("Getting band gap for the case of two spins...");
-            configuration     = self.spinOccupation;
+            # configuration     = self.spinOccupation;
             valence_states    = []
             conduction_states = []
-            for spin in configuration:
+            for spin in ["1", "2"]:
                 self.vprint("Getting bandgap information for spin %s"%spin)
-                states             = self.getLastOccuppiedStates(spin)
+                states             = self.getValenceStates(spin)
                 valence_states    += [ states["valence"] ]
                 conduction_states += [ states["conduction"] ]
             if float( valence_states[0]["energy"] ) > float( valence_states[1]["energy"] ):
