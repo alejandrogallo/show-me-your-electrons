@@ -144,6 +144,29 @@ class Diagram(object):
         states = self.getNLastExcitedStates(n)
         for state in states:
             print("%s %s"%(state["spin"], state["energy"]))
+    def getAllLastNStates(self, down_offset, up_offset=0):
+        last = self.getNLastExcitedStates(1)[0]
+        print last
+        lastIndex = last["number"]
+        # now get everything down_offset underneath
+        result_states = []
+        for i in range(0,down_offset+1):
+            newIndex = int(lastIndex) - i
+            for spin in ["1", "2"]:
+                newState = self.getStateByIndex(spin, newIndex);
+                newState["spin" ]=spin
+                result_states.append(newState)
+        for i in range(1,up_offset+1):
+            newIndex = int(lastIndex) + i
+            for spin in ["1", "2"]:
+                newState = self.getStateByIndex(spin, newIndex);
+                newState["spin" ]=spin
+                result_states.append(newState)
+        return result_states
+    def printAllLastNStates(self, down_offset, up_offset=0):
+        states = self.getAllLastNStates(down_offset, up_offset)
+        for state in states:
+            print("%s %s %s %s"%(state["spin"], state["energy"], state["occupation"], state["number"]))
 
     def getNthExcitedEnergy(self, n, spin):
         state = self.getNthExcitedState(n,spin)

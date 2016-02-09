@@ -16,6 +16,7 @@ parser.add_argument("-g", "--gap", help="Get band gap", action="store_true")
 parser.add_argument("-n", "--excited", help="Get nth excited energy (from above)", type=int, action="store")
 parser.add_argument("-s", "--spin", help="Together with -n, spin channel (1 or 2)",   action="store")
 parser.add_argument("-t", "--test", help="For testing",   action="store_true")
+parser.add_argument("-a", "--all", help="Gett all states from the highes occuppied -min + max ",   type=int, nargs="+", action="store")
 
 
 args = parser.parse_args()
@@ -40,6 +41,13 @@ if args.test:
         print diagram.getNthExcitedState(args.excited, "1")
         print diagram.getNthExcitedState(args.excited, "2")
     sys.exit(0)
+if args.all:
+    down_offset = args.all[0]
+    try:
+        up_offset = args.all[1]
+    except:
+        up_offset = 0
+    diagram.printAllLastNStates(down_offset, up_offset)
 
 if args.ascii:
     print("Displaying contents of %s in ascii"%args.file)
