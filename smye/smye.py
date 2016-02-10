@@ -7,7 +7,7 @@ class Diagram(object):
         self.filePath = filePath
         self.verbose = VERBOSE
         self.spin = spin
-        self.spinOccupation=False
+        self._configuration=None
     def vprint(self, something, err=False):
         if self.verbose:
             if not err :
@@ -27,8 +27,11 @@ class Diagram(object):
             fileBuffer = fd.read()
             if self.spin:
                 return self._parseSpin(fileBuffer)
+            else:
+                Exception("Parsing without spin not yet implemented!")
+                sys.exit(0)
     def _parseSpin(self, fileBuffer):
-        self.spinOccupation = {"1":[], "2":[]}
+        spinOccupation = {"1":[], "2":[]}
         separator = {"1":"spin component 2", "2":"-----"}
         for spin in ["1","2"]:
             self.vprint("Parsing information for spin %s"%spin)
@@ -45,9 +48,9 @@ class Diagram(object):
                 if len(lastSpinBufferCleaned)==1:
                     self.vprint("There was a problem parsing the information for spin %s"%(spin), True)
                 else:
-                    self.spinOccupation[spin]=self._parseElectronicConfiguration(lastSpinBufferCleaned[0])
-                    #print self.spinOccupation[spin]
-        return self.spinOccupation
+                    spinOccupation[spin]=self._parseElectronicConfiguration(lastSpinBufferCleaned[0])
+                    #print spinOccupation[spin]
+        return spinOccupation
     def _parseElectronicConfiguration(self, string):
         """
             This function parses the electronic configuration from a string (fileBuffer)
@@ -82,7 +85,7 @@ class Diagram(object):
             if not spin in ["1","2"]:
                 print("Spin must be either 1 or 2")
                 sys.exit(1)
-            spin_configuration = self.spinOccupation[spin]
+            spin_configuration = self.getConfiguration()[spin]
             occupied_states = []
             for state in spin_configuration:
                 if float(state["occupation"]):
@@ -153,13 +156,13 @@ class Diagram(object):
         for i in range(0,down_offset+1):
             newIndex = int(lastIndex) - i
             for spin in ["1", "2"]:
-                newState = self.getStateByIndex(spin, newIndex);
+                newState = self.getStateByBandNumber(spin, newIndex);
                 newState["spin" ]=spin
                 result_states.append(newState)
         for i in range(1,up_offset+1):
             newIndex = int(lastIndex) + i
             for spin in ["1", "2"]:
-                newState = self.getStateByIndex(spin, newIndex);
+                newState = self.getStateByBandNumber(spin, newIndex);
                 newState["spin" ]=spin
                 result_states.append(newState)
         return result_states
@@ -172,18 +175,16 @@ class Diagram(object):
         state = self.getNthExcitedState(n,spin)
         self.vprint("Getting energy for electrinic state %s"%state)
         print(state["energy"])
-    def getStateByIndex(self, spin, index):
-        for state in self.spinOccupation[spin]:
+    def getStateByBandNumber(self, spin, index):
+        for state in self.getConfiguration()[spin]:
             if float(state["number"]) == float(index):
                 return state
         return None
     def getValenceStates(self, spin):
         valence = self.getLastOccuppiedStates( spin )
-        # print("VALENCE")
-        # print(valence)
         lastIndex = valence["number"]
         condIndex = int(lastIndex)+1
-        conduction = self.getStateByIndex(spin, condIndex)
+        conduction = self.getStateByBandNumber(spin, condIndex)
         if conduction:
             return {"valence": valence, "conduction": conduction}
         else:
@@ -192,7 +193,7 @@ class Diagram(object):
     def getBandGap(self):
         if self.spin:
             self.vprint("Getting band gap for the case of two spins...");
-            # configuration     = self.spinOccupation;
+            # configuration     = self.getConfiguration();
             valence_states    = []
             conduction_states = []
             for spin in ["1", "2"]:
@@ -214,23 +215,28 @@ class Diagram(object):
             print("BG %s"%(general_bandgap))
             return (general_bandgap)
     def getConfiguration(self):
-        return self._parseFile()
+        if not self._configuration:
+            self._configuration = self._parseFile()
+        return self._configuration
     def showASCII(self):
         if self.spin:
-            if self.spinOccupation:
-                nelectrons = min(len(self.spinOccupation["1"]), len(self.spinOccupation["2"]))
-                for i in range(nelectrons-1,-1,-1):
-                    niveau1 = self.spinOccupation["1"][i]
-                    niveau2 = self.spinOccupation["2"][i]
-                    if niveau1["number"]==niveau2["number"]==str(i):
-                        occupation1 = abs(float(niveau1["occupation"]))
-                        occupation2 = abs(float(niveau2["occupation"]))
-                        occupiedSymbol=""
-                        if occupation1 or occupation2:
-                            occupiedSymbol="+"
-                        print("%s.\t(%s) [%.1f][%.1f]  (%s) \t %s"%(i, niveau2["energy"], occupation1, occupation2, niveau1["energy"], occupiedSymbol ))
-
-            else:
-                self.vprint("To show ASCII representation you first have to generate read the electron configuration", True)
-    def showHTML(self):
-        pass
+            nelectrons = min(len(self.getConfiguration()["1"]), len(self.getConfiguration()["2"]))
+            for i in range(nelectrons-1,-1,-1):
+                niveau1 = self.getConfiguration()["1"][i]
+                niveau2 = self.getConfiguration()["2"][i]
+                if niveau1["number"]==niveau2["number"]==str(i):
+                    occupation1=0.5
+                    occupation1 = abs(float(niveau1["occupation"]))
+                    occupation2 = abs(float(niveau2["occupation"]))
+                    occupiedSymbol=""
+                    if occupation1 or occupation2:
+                        occupiedSymbol="+"
+                        draw = True
+                    else:
+                        draw = False
+                    if not occupation1:
+                        occupation1 = " "
+                    if not occupation2:
+                        occupation2 = " "
+                    if draw:
+                        print("%s.\t(%s) [%s][%s] (%s) %s"%(i, niveau2["energy"], occupation1, occupation2, niveau1["energy"], occupiedSymbol ))
