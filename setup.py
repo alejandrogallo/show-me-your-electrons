@@ -8,5 +8,5 @@ setup(name="Show me your electrons",
     license="MIT",
     packages=["smye"],
     test_suite="smye.tests",
-    scripts=["bin/show-me-your-electrons"],
+    scripts=["bin/smye"],
     zip_safe=False)
