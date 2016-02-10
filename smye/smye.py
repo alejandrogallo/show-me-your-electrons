@@ -3,11 +3,19 @@ import os, sys
 VERBOSE=True
 
 class Diagram(object):
+    """
+    This class represents a parsed diagram, the methods of this class are used
+    to extract information of the electronic configuration stored in the class.
+
+    It needs to be given upon initializazion a file to read the electronic
+    structure from. At the moment it assumes that the format of the file is in
+    the OUTCAR form of the VASP program.
+    """
     def __init__(self, filePath, verbose=VERBOSE, spin=True):
-        self.filePath = filePath
-        self.verbose = VERBOSE
-        self.spin = spin
-        self._configuration=None
+        self.filePath       = filePath
+        self.verbose        = VERBOSE
+        self.spin           = spin
+        self._configuration = None
     def vprint(self, something, err=False):
         if self.verbose:
             if not err :
@@ -15,7 +23,9 @@ class Diagram(object):
             else:
                 raise Exception("Diagram::ERROR:: %s"%something)
     def _parseFile(self):
-        """ This function parses the electronic configuration of the filePath """
+        """
+        This function parses the electronic configuration of the filePath
+        """
         try:
             self.vprint("Trying to open file %s"%self.filePath)
             fd = open(self.filePath,"r")
@@ -32,7 +42,7 @@ class Diagram(object):
                 sys.exit(0)
     def _parseSpin(self, fileBuffer):
         spinOccupation = {"1":[], "2":[]}
-        separator = {"1":"spin component 2", "2":"-----"}
+        separator      = {"1":"spin component 2", "2":"-----"}
         for spin in ["1","2"]:
             self.vprint("Parsing information for spin %s"%spin)
             # The separators tell you up until which characters the spin part goes
@@ -43,7 +53,7 @@ class Diagram(object):
                 self.vprint("There is no 'spin component %s' part in file %s"%(spin, self.filePath), True)
                 sys.exit(-1)
             else:
-                lastSpinBuffer = spinBuffer[-1]
+                lastSpinBuffer        = spinBuffer[-1]
                 lastSpinBufferCleaned = lastSpinBuffer.split(separator[spin])
                 if len(lastSpinBufferCleaned)==1:
                     self.vprint("There was a problem parsing the information for spin %s"%(spin), True)
@@ -53,13 +63,15 @@ class Diagram(object):
         return spinOccupation
     def _parseElectronicConfiguration(self, string):
         """
-            This function parses the electronic configuration from a string (fileBuffer)
-            The format of the string should be a table with the following columns:
-                electron_number     electron_energy     electron_occupation
+        This function parses the electronic configuration from a string
+        (fileBuffer) The format of the string should be a table with the
+        following columns:
+
+         | electron_number | electron_energy | electron_occupation |
         """
         import re
-        result = []
-        p = re.compile("(\-?\d+\.?\d*)\s+(\-?\d+\.?\d*)\s+(\-?\d+\.?\d*)")
+        result      = []
+        p           = re.compile("(\-?\d+\.?\d*)\s+(\-?\d+\.?\d*)\s+(\-?\d+\.?\d*)")
         stringLines = string.split("\n")
         for line in stringLines:
             match = p.findall(line)
@@ -73,11 +85,6 @@ class Diagram(object):
                     break
         return result
     def getLastOccuppiedStates(self, spin):
-        """
-        Returns a dict
-            {"valence":occupancy, "conduction":last}
-        with the valence state and the conduction (first unoccupied state) state
-        """
         self.vprint("Getting last occupied state ...")
         return self.getNthExcitedState(1,spin)
     def getNthExcitedState(self, n, spin):
@@ -111,25 +118,25 @@ class Diagram(object):
         """
         classified_states = []
         get = "both"
-        j = 1
-        k = 1
+        j   = 1
+        k   = 1
         # init = True
         for i in range(1,int(n)+1):
             if get == "1" or get == "both":
                 if get == "both":
                     self.vprint("init")
-                    last = self.getNthExcitedState(k, "2")
+                    last         = self.getNthExcitedState(k, "2")
                     last["spin"] = "2";
-                    spin_last = "2"
+                    spin_last    = "2"
                     k+=1;
-                new = self.getNthExcitedState(j, "1")
+                new         = self.getNthExcitedState(j, "1")
                 new["spin"] = "1";
-                spin_new = "1"
+                spin_new    = "1"
                 j+=1;
             else:
-                new = self.getNthExcitedState(k, "2")
+                new         = self.getNthExcitedState(k, "2")
                 new["spin"] = "2";
-                spin_new = "2"
+                spin_new    = "2"
                 k+=1;
             self.vprint("new %s"%new)
             self.vprint("last %s"%last)
@@ -139,8 +146,8 @@ class Diagram(object):
             else:
                 self.vprint("change")
                 classified_states.append(last)
-                last = new
-                get  = spin_last
+                last      = new
+                get       = spin_last
                 spin_last = spin_new
         return classified_states
     def printNLastExcitedStates(self, n):
@@ -148,22 +155,21 @@ class Diagram(object):
         for state in states:
             print("%s %s"%(state["spin"], state["energy"]))
     def getAllLastNStates(self, down_offset, up_offset=0):
-        last = self.getNLastExcitedStates(1)[0]
-        # print last
+        last      = self.getNLastExcitedStates(1)[0]
         lastIndex = last["number"]
         # now get everything down_offset underneath
         result_states = []
         for i in range(0,down_offset+1):
             newIndex = int(lastIndex) - i
             for spin in ["1", "2"]:
-                newState = self.getStateByBandNumber(spin, newIndex);
-                newState["spin" ]=spin
+                newState          = self.getStateByBandNumber(spin, newIndex);
+                newState["spin" ] = spin
                 result_states.append(newState)
         for i in range(1,up_offset+1):
             newIndex = int(lastIndex) + i
             for spin in ["1", "2"]:
-                newState = self.getStateByBandNumber(spin, newIndex);
-                newState["spin" ]=spin
+                newState          = self.getStateByBandNumber(spin, newIndex);
+                newState["spin" ] = spin
                 result_states.append(newState)
         return result_states
     def printAllLastNStates(self, down_offset, up_offset=0):
@@ -181,9 +187,15 @@ class Diagram(object):
                 return state
         return None
     def getValenceStates(self, spin):
-        valence = self.getLastOccuppiedStates( spin )
-        lastIndex = valence["number"]
-        condIndex = int(lastIndex)+1
+        """
+        Returns a dict
+            {"valence": valence_state, "conduction": conduction_state}
+        with the valence state and the conduction (first unoccupied state)
+        state
+        """
+        valence    = self.getLastOccuppiedStates( spin )
+        lastIndex  = valence["number"]
+        condIndex  = int(lastIndex)+1
         conduction = self.getStateByBandNumber(spin, condIndex)
         if conduction:
             return {"valence": valence, "conduction": conduction}
@@ -191,6 +203,9 @@ class Diagram(object):
             raise Exception("Conduction state was not found!")
             return False
     def getBandGap(self):
+        """
+        Gets the bandgap out of the electronic configuration
+        """
         if self.spin:
             self.vprint("Getting band gap for the case of two spins...");
             # configuration     = self.getConfiguration();
@@ -215,17 +230,25 @@ class Diagram(object):
             print("BG %s"%(general_bandgap))
             return (general_bandgap)
     def getConfiguration(self):
+        """
+        General getter for the electronic occupation, if the occupation has not
+        been parsed from the file, it parses it, else it just returns the
+        previously parsed configuration
+        """
         if not self._configuration:
             self._configuration = self._parseFile()
         return self._configuration
     def showASCII(self):
+        """
+        Produces a crude ASCII representation of the electronic occupation
+        """
         if self.spin:
             nelectrons = min(len(self.getConfiguration()["1"]), len(self.getConfiguration()["2"]))
             for i in range(nelectrons-1,-1,-1):
                 niveau1 = self.getConfiguration()["1"][i]
                 niveau2 = self.getConfiguration()["2"][i]
                 if niveau1["number"]==niveau2["number"]==str(i):
-                    occupation1=0.5
+                    occupation1 = 0.5
                     occupation1 = abs(float(niveau1["occupation"]))
                     occupation2 = abs(float(niveau2["occupation"]))
                     occupiedSymbol=""
