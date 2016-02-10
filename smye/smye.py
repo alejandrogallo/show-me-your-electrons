@@ -98,13 +98,13 @@ class Diagram(object):
             return False
     def getNLastExcitedStates(self, n):
         """
-        *        
-        *        
-        *  +     
-           +     
-                 
-        *        
-        *        
+        *
+        *
+        *  +
+           +
+
+        *
+        *
         """
         classified_states = []
         get = "both"
@@ -228,7 +228,7 @@ class Diagram(object):
                         occupiedSymbol=""
                         if occupation1 or occupation2:
                             occupiedSymbol="+"
-                        print("%s.\t[%.1f][%.1f]  (%s) \t %s"%(i, occupation1, occupation2, niveau1["energy"], occupiedSymbol ))
+                        print("%s.\t(%s) [%.1f][%.1f]  (%s) \t %s"%(i, niveau2["energy"], occupation1, occupation2, niveau1["energy"], occupiedSymbol ))
 
             else:
                 self.vprint("To show ASCII representation you first have to generate read the electron configuration", True)
