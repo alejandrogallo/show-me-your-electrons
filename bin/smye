@@ -4,12 +4,29 @@ import sys
 import smye
 import argparse
 
-parser = argparse.ArgumentParser()
+############################
+#  ADDITIONAL INFORMATION  #
+############################
+
+SETUP_INFO  = smye.SETUP_INFO
+DESCRIPTION = SETUP_INFO["description"]
+EPILOG      = """
+
+This program is maintained by %s at %s.
+
+"""%(SETUP_INFO["author"], SETUP_INFO["url"])
 
 
-parser.add_argument("file", help="Input file in OUTCAR format")
+############################################
+#  ARGUMENT PARSER AND OPTION DEFINITIONS  #
+############################################
+
+parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
+
+parser.add_argument("--version", help="Print version and exit", action="store_true")
 parser.add_argument("-v", "--verbose", help="Make the output verbose", action="store_true")
 parser.add_argument("--ascii", help="Print the electron configuration in ascii format", action="store_true")
+parser.add_argument("file", help="Input file (in OUTCAR format)", default=None, nargs="?")
 parser.add_argument("-g", "--gap", help="Get band gap", action="store_true")
 parser.add_argument("-n", "--excited", help="Get nth excited energy (from above)", type=int, action="store")
 parser.add_argument("-s", "--spin", help="Together with -n, spin channel (1 or 2)",   action="store")
@@ -21,15 +38,22 @@ args = parser.parse_args()
 
 
 
+if args.version:
+    print(SETUP_INFO["version"])
+    sys.exit(1)
 
 if args.verbose:
     print(smye.LOGO)
     print("Making the output verbose...")
-    smye.smye.VERBOSE=True
+    smye.VERBOSE=True
 else:
-    smye.smye.VERBOSE=False
+    smye.VERBOSE=False
 
-diagram = smye.Diagram(args.file)
+if args.file:
+    diagram = smye.Diagram(args.file)
+else:
+    print("No input file provided!")
+    sys.exit(1)
 
 if args.test:
     print(diagram.getLastOccuppiedStates("1"));
