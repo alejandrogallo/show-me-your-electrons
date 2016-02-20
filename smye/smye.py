@@ -1,6 +1,6 @@
 import os, sys
 
-VERBOSE=True
+VERBOSE=False
 
 class Diagram(object):
     """
