@@ -32,6 +32,7 @@ parser.add_argument("-n", "--excited", help="Get nth excited energy (from above)
 parser.add_argument("-s", "--spin", help="Together with -n, spin channel (1 or 2)",   action="store")
 parser.add_argument("-t", "--test", help="For testing",   action="store_true")
 parser.add_argument("-a", "--all", help="Gett all states from the highes occuppied -min + max ",   type=int, nargs="+", action="store")
+parser.add_argument("--no-polarised", help="Parse information from no polarised calculations", action="store_true")
 
 
 args = parser.parse_args()
