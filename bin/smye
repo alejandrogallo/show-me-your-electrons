@@ -38,7 +38,6 @@ parser.add_argument("--no-polarised", help="Parse information from no polarised 
 args = parser.parse_args()
 
 
-
 if args.version:
     print(SETUP_INFO["version"])
     sys.exit(1)
@@ -51,7 +50,14 @@ else:
     smye.VERBOSE=False
 
 if args.file:
-    diagram = smye.Diagram(args.file)
+    spin=True
+    if args.no_polarised:
+        smye.printv("Considering no spin polarisation");
+        spin = False
+    diagram = smye.Diagram(args.file, verbose=smye.VERBOSE, spin=spin)
+    for i in range(1,10):
+        print i
+        print diagram.getNthLeastEnergeticStateWith(i, occupied=True)
 else:
     print("No input file provided!")
     sys.exit(1)

@@ -1,6 +1,10 @@
 
 from smye import * 
 
+def printv(smth):
+    if VERBOSE:
+        print(smth)
+
 LOGO = """
  ____  _  _  _  _  ____ 
 / ___)( \/ )( \/ )(  __)
@@ -11,7 +15,7 @@ LOGO = """
 
 SETUP_INFO = dict(
     name             = "Show me your electrons",
-    version          = "0.0.1",
+    version          = "0.1.1",
     description      = "A little tool to parse electronic configurations",
     url              = "http://github.com/alejandrogallo/smye",
     author           = "Alejandro Gallo",
