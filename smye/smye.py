@@ -14,15 +14,16 @@ class Diagram(object):
     """
 
     def __init__(self, filePath, verbose=VERBOSE, spin=True):
+
         self.filePath       = filePath
         self.verbose        = verbose
         self.spin           = spin
         self._configuration = None
 
-    def vprint(self, something, err=False):
+    def vprint(self, something, err=False, title="Diagram"):
         if self.verbose:
             if not err :
-                print("Diagram:: %s"%something)
+                print("%s:: %s"%(title, something))
             else:
                 raise Exception("Diagram::ERROR:: %s"%something)
 
@@ -39,11 +40,16 @@ class Diagram(object):
         else:
             self.vprint("Reading file")
             fileBuffer = fd.read()
-            self.vprint("WARNING: ONLY WORKS FOR ONE K-POINT")
+            self.vprint("\033[0;31mWARNING:\033[0m ONLY WORKS FOR ONE K-POINT")
             if self.spin:
                 return self._parseWithSpin(fileBuffer)
             else:
                 return self._parseWithoutSpin(fileBuffer)
+
+    def _addKeyToStates(self, states, key, value):
+        for state in states:
+            state[key]=value
+        return states
 
     def _parseWithoutSpin(self, fileBuffer):
         """
@@ -60,7 +66,7 @@ class Diagram(object):
         occupationBuffer = fileBuffer.split(identificationString);
         if len(occupationBuffer)==1:
             self.vprint("There is no '%s' part in file %s, I AM NOT ABLE TO FIND ELECTRONIC INFORMATION"%(identificationString, self.filePath), True)
-            sys.exit(-1)
+            sys.exit(1)
         else:
             lastOccupationBuffer        = occupationBuffer[-1]
             lastOccupationBufferCleaned = lastOccupationBuffer.split(downSeparator)
@@ -68,8 +74,8 @@ class Diagram(object):
                 self.vprint("There was a problem parsing the information ", True)
             else:
                 occupation=self._parseElectronicConfiguration(lastOccupationBufferCleaned[0])
-        # self.vprint("Occupation parsed is : %s"%occupation)
-        return occupation
+        # we add a key to all states for completeness for the case with spin polarisation
+        return self._addKeyToStates(occupation, "spin", 0)
 
     def _parseWithSpin(self, fileBuffer):
         spinOccupation = {"1":[], "2":[]}
@@ -89,8 +95,10 @@ class Diagram(object):
                 if len(lastSpinBufferCleaned)==1:
                     self.vprint("There was a problem parsing the information for spin %s"%(spin), True)
                 else:
-                    spinOccupation[spin]=self._parseElectronicConfiguration(lastSpinBufferCleaned[0])
-                    #print spinOccupation[spin]
+                    preOccupation = self._parseElectronicConfiguration(lastSpinBufferCleaned[0])
+                    # we add a key to all states to be able to differentiate between spins
+                    spinOccupation[spin]=self._addKeyToStates(preOccupation, "spin", spin)
+                    self.vprint("[   \033[0;31mOK\033[0m   ] Information for spin %s parsed"%spin)
         return spinOccupation
 
     def _parseElectronicConfiguration(self, string):
@@ -111,6 +119,10 @@ class Diagram(object):
         for line in stringLines:
             match = p.findall(line)
             if match:
+                if "k-point" in line:
+                    # fix for k-point appearing in OUTCAR
+                    self.vprint("\tignoring line with k-point")
+                    continue
                 if len(match) == 1:
                     niveau = match[0]
                     result.append({"number": niveau[0], "energy":niveau[1], "occupation":niveau[2]})
@@ -118,9 +130,38 @@ class Diagram(object):
                     break
         return result
 
+    def _findTheNthExtremalEnergeticState(self, n, states, extreme):
+        self.vprint("Finding the (%s)th extreme (%s)"%(n, extreme))
+        popIndex = -1
+        bottle = None
+        for i in range(n):
+            bottle = states[-1]
+            for j, state in enumerate(states):
+                if extreme == "least":
+                    if self._geq(bottle, state):
+                        # self.vprint(bottle)
+                        bottle=state
+                        popIndex=j
+                else:
+                    if self._geq(state, bottle):
+                        # self.vprint(bottle)
+                        bottle=state
+                        popIndex=j
+            # erase maximum from the list
+            states.pop(popIndex)
+        return bottle
 
     def getConfigurationWith(self, spin=-1, occupied=True):
-        occupied_states = []
+        """
+        Get configuration of occupied or unoccupied states
+        also according to spin.
+
+            Spin must be 1 or 2 if being calculating with
+            spin polarisation
+
+        Returns a list of states
+        """
+        states = []
         if self.spin:
             if not spin in ["1","2"]:
                 print("Spin must be either 1 or 2")
@@ -131,50 +172,46 @@ class Diagram(object):
         for state in configuration:
             if occupied:
                 if float(state["occupation"]):
-                    occupied_states.append(state)
+                    states.append(state)
             else:
                 if not float(state["occupation"]):
-                    occupied_states.append(state)
-        return occupied_states
+                    states.append(state)
+        return states
 
     def getUnoccupiedStates(self, spin=-1):
-        """TODO: Docstring for getOccupiedStates.
-
-        :spin: TODO
-        :returns: TODO
-
-        """
+        self.vprint("Getting \033[0;36munoccupied\033[0m states")
         return self.getConfigurationWith(spin, occupied=False)
 
     def getOccupiedStates(self, spin=-1):
-        """TODO: Docstring for getOccupiedStates.
-
-        :spin: TODO
-        :returns: TODO
-
-        """
+        self.vprint("Getting \033[0;36moccupied\033[0m states")
         return self.getConfigurationWith(spin, occupied=True)
+
+    def getStatesAboutFermiLevel(self, down_offset, up_offset):
+        states = []
+        # unoccupied states
+        for i in range(up_offset, 0, -1):
+            state = self.getNthLeastEnergeticState(i, occupied=False)
+            states.append(state)
+        # occupied states
+        for i in range(1,down_offset+1):
+            state = self.getNthMostEnergeticState(i, occupied=True)
+            states.append(state)
+        return states
+
 
     def getNthLeastEnergeticStateWith(self, n, spin=-1, occupied=True):
         """
+        This is together with getNthMostEnergeticStateWith one of the main
+        functions of the package.
+
         Get the nth least energetic state of occupied or unoccupied states
             e.g.: 1 = least energetic usw..
         We make n loops finding the most energetic occupied states and taking
         them out of the list
         """
+        self.vprint("Getting the %sth least energetic state with spin=%s"%(n, spin))
         states = self.getConfigurationWith(spin, occupied)
-        popIndex = -1
-        bottle = None
-        for i in range(n):
-            bottle = states[-1]
-            for j, state in enumerate(states):
-                if self._geq(bottle, state):
-                    self.vprint(bottle)
-                    bottle=state
-                    popIndex=j
-            # erase maximum from the list
-            states.pop(popIndex)
-        return bottle
+        return self._findTheNthExtremalEnergeticState(n, states, "least")
 
     def getNthMostEnergeticStateWith(self, n, spin=-1, occupied=True):
         """
@@ -183,28 +220,28 @@ class Diagram(object):
         We make n loops finding the most energetic occupied states and taking
         them out of the list
         """
+        self.vprint("Getting the %sth least energetic state with spin=%s"%(n, spin))
         states = self.getConfigurationWith(spin, occupied)
-        popIndex = -1
-        bottle = None
-        for i in range(n):
-            bottle = states[-1]
-            for j, state in enumerate(states):
-                if self._geq(state, bottle):
-                    self.vprint(bottle)
-                    bottle=state
-                    popIndex=j
-            # erase maximum from the list
-            states.pop(popIndex)
-        return bottle
+        return self._findTheNthExtremalEnergeticState(n, states, "most")
 
-    def getNthExcitedState(self, n, spin=-1):
-        """
-        Get the nth most energetic state
-            e.g.: 1 = most energetic usw..
-        We make n loops finding the most energetic occupied states and taking
-        them out of the list
-        """
-        return self.getNthMostEnergeticStateWith(n, spin, occupied=True)
+    def getNthExtremalEnergeticState(self, n, extreme, occupied=True):
+        self.vprint("Getting the %sth %s energetic state with regardless of spin for occupied = %s"%(n, extreme, occupied))
+        if self.spin:
+            spin1_states = self.getConfigurationWith(spin="1", occupied=occupied)
+            spin2_states = self.getConfigurationWith(spin="2", occupied=occupied)
+            all_states = spin1_states + spin2_states
+            return self._findTheNthExtremalEnergeticState(n, all_states, extreme)
+        else:
+            if extreme=="least":
+                return self.getNthLeastEnergeticStateWith(n, spin=-1, occupied=occupied)
+            else:
+                return self.getNthMostEnergeticStateWith(n, spin=-1, occupied=occupied)
+
+    def getNthMostEnergeticState(self, n, occupied):
+        return self.getNthExtremalEnergeticState(n, "most", occupied=occupied)
+
+    def getNthLeastEnergeticState(self, n, occupied):
+        return self.getNthExtremalEnergeticState(n, "least", occupied=occupied)
 
     def _leq(self, state1, state2):
         """
@@ -224,174 +261,43 @@ class Diagram(object):
         else:
             return False
 
-    def getNLastMostEnergeticStatesWith(self, n, occupied=True):
-        """
-        *
-        *
-        *  +
-           +
-
-        *
-        *
-        """
-        if self.spin:
-            classified_states = []
-            get = "both"
-            j   = 1
-            k   = 1
-            # init = True
-            for i in range(1,int(n)+1):
-                if get == "1" or get == "both":
-                    if get == "both":
-                        self.vprint("init")
-                        last         = self.getNthOrderedState(k, spin="2", occupied=occupied)
-                        last["spin"] = "2";
-                        spin_last    = "2"
-                        k+=1;
-                    new         = self.getNthOrderedState(j, spin="1", occupied=occupied)
-                    new["spin"] = "1";
-                    spin_new    = "1"
-                    j+=1;
-                else:
-                    new         = self.getNthOrderedState(k, spin="2", occupied=occupied)
-                    new["spin"] = "2";
-                    spin_new    = "2"
-                    k+=1;
-                self.vprint("new %s"%new)
-                self.vprint("last %s"%last)
-                if self._geq(new, last):
-                    classified_states.append(new)
-                    get  = spin_new
-                else:
-                    self.vprint("change")
-                    classified_states.append(last)
-                    last      = new
-                    get       = spin_last
-                    spin_last = spin_new
-            return classified_states
-        else:
-            classified_states = [];
-            for i in range(1, int(n)+1):
-                classified_states.append(self.getNthMostEnergeticStateWith(i,occupied=occupied))
-            return classified_states
-
-    def getNLastExcitedStates(self, n):
-        return self.getNLastMostEnergeticStatesWith(n, occupied=True)
 
     def printNLastExcitedStates(self, n):
-        states = self.getNLastExcitedStates(n)
+        states = self.getNLastMostEnergeticStatesWith(n,occupied=True)
         for state in states:
             print("%s %s"%(state["spin"], state["energy"]))
 
-    def getAllLastNStates(self, down_offset, up_offset=0):
-        if self.spin:
-            last      = self.getNLastExcitedStates(1)[0]
-            lastIndex = last["number"]
-            # now get everything down_offset underneath
-            result_states = []
-            for i in range(0,down_offset+1):
-                newIndex = int(lastIndex) - i
-                for spin in ["1", "2"]:
-                    newState          = self.getStateByBandNumber(spin, newIndex);
-                    newState["spin" ] = spin
-                    result_states.append(newState)
-            for i in range(1,up_offset+1):
-                newIndex = int(lastIndex) + i
-                for spin in ["1", "2"]:
-                    newState          = self.getStateByBandNumber(spin, newIndex);
-                    newState["spin" ] = spin
-                    result_states.append(newState)
-            return result_states
 
-    def printAllLastNStates(self, down_offset, up_offset=0):
-        states = self.getAllLastNStates(down_offset, up_offset)
+
+    def printStatesAboutFermiLevel(self, down_offset, up_offset=0):
+        states = self.getStatesAboutFermiLevel(down_offset, up_offset)
         for state in states:
-            print("%s %s %s %s"%(state["spin"], state["energy"], state["occupation"], state["number"]))
+            print state
+            # print("%s %s %s %s"%(state["spin"], state["energy"], state["occupation"], state["number"]))
 
-    def getNthExcitedEnergy(self, n, spin):
-        state = self.getNthExcitedState(n,spin)
-        self.vprint("Getting energy for electrinic state %s"%state)
-        print(state["energy"])
+    def getHomo(self):
+        self.vprint("Getting \033[0;36mHOMO\033[0m")
+        return self.getNthMostEnergeticState(1, occupied=True)
 
-    def getStateByBandNumber(self, spin, index):
-        if self.spin:
-            configuration = self.getConfiguration()[spin]
-        else:
-            configuration = self.getConfiguration()
-        for state in configuration:
-            if float(state["number"]) == float(index):
-                return state
-        return None
-
-    def getLastOccuppiedStates(self, spin=-1):
-        self.vprint("Getting last occupied state ...")
-        return self.getNthExcitedState(1,spin)
-
-    def getValenceStates(self, spin):
-        """
-        Returns a dict
-            {"valence": valence_state, "conduction": conduction_state}
-        with the valence state and the conduction (first unoccupied state)
-        state
-        """
-        valence    = self.getLastOccuppiedStates( spin )
-        lastIndex  = valence["number"]
-        condIndex  = int(lastIndex)+1
-        conduction = self.getStateByBandNumber(spin, condIndex)
-        if conduction:
-            return {"valence": valence, "conduction": conduction}
-        else:
-            raise Exception("Conduction state was not found!")
-            return False
+    def getLumo(self):
+        self.vprint("Getting \033[0;36mLUMO\033[0m")
+        return self.getNthLeastEnergeticState(1, occupied=False)
 
     def getBandGap(self):
         """
         Gets the bandgap out of the electronic configuration
         """
-        if self.spin:
-            self.vprint("Getting band gap for the case of two spins...");
-            # configuration     = self.getConfiguration();
-            valence_states    = []
-            conduction_states = []
-            for spin in ["1", "2"]:
-                self.vprint("Getting bandgap information for spin %s"%spin)
-                states             = self.getValenceStates(spin)
-                valence_states    += [ states["valence"] ]
-                conduction_states += [ states["conduction"] ]
-            if float( valence_states[0]["energy"] ) > float( valence_states[1]["energy"] ):
-                valence = valence_states[0]
-            else:
-                valence = valence_states[1]
-            if float( conduction_states[0]["energy"] ) < float( conduction_states[1]["energy"] ):
-                conduction = conduction_states[0]
-            else:
-                conduction = conduction_states[1]
-            general_bandgap = float(conduction["energy"]) - float(valence["energy"])
-            print("VB %s"%valence["energy"])
-            print("LB %s"%conduction["energy"])
-            print("BG %s"%(general_bandgap))
-            print("HOMO %s"%(valence))
-            print("LUMO %s"%(conduction))
-            return (general_bandgap)
-        else:
-            self.vprint("Getting band gap for the case of no spin ...");
-            configuration = self.getConfiguration();
-            valence       = {"energy":0, "occupation": 0}
-            conduction    = {"energy":10000000, "occupation": 1}
-            for state in configuration:
-                if float(state["occupation"]) > 0:
-                    if self._geq(state, valence):
-                        valence = state
-                else:
-                    if self._geq(conduction, state):
-                        conduction = state
-            general_bandgap = float(conduction["energy"]) - float(valence["energy"])
-            print("VB %s"%valence["energy"])
-            print("LB %s"%conduction["energy"])
-            print("BG %s"%(general_bandgap))
-            print("HOMO %s"%(valence))
-            print("LUMO %s"%(conduction))
-            return (general_bandgap)
+        self.vprint("Getting bandgap information");
+        valence = self.getHomo()
+        conduction = self.getLumo()
+
+        bandgap = float(conduction["energy"]) - float(valence["energy"])
+        print("VB %s"%valence["energy"])
+        print("LB %s"%conduction["energy"])
+        print("BG %s"%(bandgap))
+        print("HOMO %s"%(valence))
+        print("LUMO %s"%(conduction))
+        return bandgap
 
     def getConfiguration(self):
 
@@ -402,6 +308,7 @@ class Diagram(object):
         """
 
         if not self._configuration:
+            self.vprint("Going to get configuration from file")
             self._configuration = self._parseFile()
         return self._configuration
 
@@ -410,10 +317,12 @@ class Diagram(object):
         Produces a crude ASCII representation of the electronic occupation
         """
         if self.spin:
-            nelectrons = min(len(self.getConfiguration()["1"]), len(self.getConfiguration()["2"]))
+            states_spin1 = self.getConfiguration()["1"]
+            states_spin2 = self.getConfiguration()["2"]
+            nelectrons = min(len(states_spin1), len(states_spin2))
             for i in range(nelectrons-1,-1,-1):
-                niveau1 = self.getConfiguration()["1"][i]
-                niveau2 = self.getConfiguration()["2"][i]
+                niveau1 = states_spin1[i]
+                niveau2 = states_spin2[i]
                 if niveau1["number"]==niveau2["number"]==str(i):
                     occupation1 = 0.5
                     occupation1 = abs(float(niveau1["occupation"]))
@@ -447,3 +356,75 @@ class Diagram(object):
                     occupation = " "
                 if draw:
                     print("%s.\t(%s) [%s] %s"%(i, niveau["energy"], occupation, occupiedSymbol ))
+
+    # def getStateByBandNumber(self, spin, index):
+        # if self.spin:
+            # configuration = self.getConfiguration()[spin]
+        # else:
+            # configuration = self.getConfiguration()
+        # for state in configuration:
+            # if float(state["number"]) == float(index):
+                # return state
+        # return None
+
+    # def getNLastMostEnergeticStatesWith(self, n, occupied=True):
+        # if self.spin:
+            # classified_states = []
+            # get = "both"
+            # j   = 1
+            # k   = 1
+            # # init = True
+            # for i in range(1,int(n)+1):
+                # if get == "1" or get == "both":
+                    # if get == "both":
+                        # self.vprint("init")
+                        # last         = self.getNthMostEnergeticStateWith(k, spin="2", occupied=occupied)
+                        # last["spin"] = "2";
+                        # spin_last    = "2"
+                        # k+=1;
+                    # new         = self.getNthMostEnergeticStateWith(j, spin="1", occupied=occupied)
+                    # new["spin"] = "1";
+                    # spin_new    = "1"
+                    # j+=1;
+                # else:
+                    # new         = self.getNthMostEnergeticStateWith(k, spin="2", occupied=occupied)
+                    # new["spin"] = "2";
+                    # spin_new    = "2"
+                    # k+=1;
+                # self.vprint("new %s"%new)
+                # self.vprint("last %s"%last)
+                # if self._geq(new, last):
+                    # classified_states.append(new)
+                    # get  = spin_new
+                # else:
+                    # self.vprint("change")
+                    # classified_states.append(last)
+                    # last      = new
+                    # get       = spin_last
+                    # spin_last = spin_new
+            # return classified_states
+        # else:
+            # classified_states = [];
+            # for i in range(1, int(n)+1):
+                # classified_states.append(self.getNthMostEnergeticStateWith(i,occupied=occupied))
+            # return classified_states
+
+    # def getAllLastNStates(self, down_offset, up_offset=0):
+        # if self.spin:
+            # last      = self.getNLastMostEnergeticStatesWith(n,occupied=True)[0]
+            # lastIndex = last["number"]
+            # # now get everything down_offset underneath
+            # result_states = []
+            # for i in range(0,down_offset+1):
+                # newIndex = int(lastIndex) - i
+                # for spin in ["1", "2"]:
+                # newState          = self.getStateByBandNumber(spin, newIndex);
+                # newState["spin" ] = spin
+                # result_states.append(newState)
+        # for i in range(1,up_offset+1):
+            # newIndex = int(lastIndex) + i
+            # for spin in ["1", "2"]:
+                # newState          = self.getStateByBandNumber(spin, newIndex);
+                    # newState["spin" ] = spin
+                    # result_states.append(newState)
+            # return result_states

@@ -31,8 +31,8 @@ parser.add_argument("-g", "--gap", help="Get band gap", action="store_true")
 parser.add_argument("-n", "--excited", help="Get nth excited energy (from above)", type=int, action="store")
 parser.add_argument("-s", "--spin", help="Together with -n, spin channel (1 or 2)",   action="store")
 parser.add_argument("-t", "--test", help="For testing",   action="store_true")
-parser.add_argument("-a", "--all", help="Gett all states from the highes occuppied -min + max ",   type=int, nargs="+", action="store")
-parser.add_argument("--no-polarised", help="Parse information from no polarised calculations", action="store_true")
+parser.add_argument("-a", "--all", help="Get n_up and n_down states about the fermi level. Example: -a 4 10 (4 occupied and 10 unoccupied)",   type=int, nargs="+", action="store")
+parser.add_argument("--no-spin", help="Parse information from no polarised calculations", action="store_true")
 
 
 args = parser.parse_args()
@@ -43,49 +43,53 @@ if args.version:
     sys.exit(1)
 
 if args.verbose:
-    print(smye.LOGO)
-    print("Making the output verbose...")
     smye.VERBOSE=True
+    print(smye.LOGO)
+    smye.printv("Making the output verbose...", title="CLI")
 else:
     smye.VERBOSE=False
 
-if args.file:
-    spin=True
-    if args.no_polarised:
-        smye.printv("Considering no spin polarisation");
-        spin = False
-    diagram = smye.Diagram(args.file, verbose=smye.VERBOSE, spin=spin)
-    for i in range(1,10):
-        print i
-        print diagram.getNthLeastEnergeticStateWith(i, occupied=True)
+if args.no_spin:
+    smye.printv("Working in spin unpolarised mode", title="CLI")
+    SPIN_POLARISED=False
 else:
-    print("No input file provided!")
+    smye.printv("Working in spin polarised mode", title="CLI")
+    SPIN_POLARISED=True
+
+if args.file:
+    diagram = smye.Diagram(args.file, verbose=smye.VERBOSE, spin=SPIN_POLARISED)
+    # for i in range(1,10):
+        # print i
+        # print diagram.getNthLeastEnergeticStateWith(i, occupied=True)
+else:
+    smye.printv("No input file provided!", title="CLI")
     sys.exit(1)
 
 if args.test:
-    print(diagram.getLastOccuppiedStates("1"));
-    print(diagram.getLastOccuppiedStates("2"));
+    smye.printv(diagram.getLastOccuppiedStates("1"), title="CLI");
+    smye.printv(diagram.getLastOccuppiedStates("2"), title="CLI");
     if args.excited:
-        print(diagram.getNthExcitedState(args.excited, "1"));
-        print(diagram.getNthExcitedState(args.excited, "2"));
+        smye.printv(diagram.getNthExcitedState(args.excited, "1"), title="CLI");
+        smye.printv(diagram.getNthExcitedState(args.excited, "2"), title="CLI");
     sys.exit(0)
+
 if args.all:
     down_offset = args.all[0]
     try:
         up_offset = args.all[1]
     except:
-        up_offset = 0
-    diagram.printAllLastNStates(down_offset, up_offset)
+        up_offset = down_offset
+    diagram.printStatesAboutFermiLevel(down_offset, up_offset)
 
 if args.ascii:
-    print("Displaying contents of %s in ascii"%args.file)
+    smye.printv("Displaying contents of %s in ascii"%args.file, title="CLI")
     diagram.showASCII()
 
 if args.gap:
     diagram.getBandGap();
 
 if args.excited and args.spin:
-    print("both")
+    smye.printv("both", title="CLI")
 else:
     if args.excited:
         diagram.printNLastExcitedStates(args.excited)

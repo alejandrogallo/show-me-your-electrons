@@ -1,9 +1,9 @@
 
 from smye import * 
 
-def printv(smth):
+def printv(smth, title=""):
     if VERBOSE:
-        print(smth)
+        print("%s:: %s"%(title, smth))
 
 LOGO = """
  ____  _  _  _  _  ____ 
