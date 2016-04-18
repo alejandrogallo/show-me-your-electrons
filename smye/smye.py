@@ -262,18 +262,20 @@ class Diagram(object):
             return False
 
 
-    def printNLastExcitedStates(self, n):
-        states = self.getNLastMostEnergeticStatesWith(n,occupied=True)
-        for state in states:
-            print("%s %s"%(state["spin"], state["energy"]))
-
-
+    def printNthExcitedState(self, nArray):
+        for n in nArray:
+            if n < 0:
+                state = self.getNthLeastEnergeticState(abs(n), occupied=False)
+            else:
+                state = self.getNthMostEnergeticState(n,occupied=True)
+            print(state)
 
     def printStatesAboutFermiLevel(self, down_offset, up_offset=0):
         states = self.getStatesAboutFermiLevel(down_offset, up_offset)
+        print("%s %s %s %s"%("spin", "energy", "occupation", "number"))
         for state in states:
-            print state
-            # print("%s %s %s %s"%(state["spin"], state["energy"], state["occupation"], state["number"]))
+            # print state
+            print("%s %s %s %s"%(state["spin"], state["energy"], state["occupation"], state["number"]))
 
     def getHomo(self):
         self.vprint("Getting \033[0;36mHOMO\033[0m")
@@ -311,6 +313,11 @@ class Diagram(object):
             self.vprint("Going to get configuration from file")
             self._configuration = self._parseFile()
         return self._configuration
+
+    def mosAsymptote(self, states, *args, **kwargs):
+        import mos
+        print(mos.MOS_ASYMPTOTE(states, *args, **kwargs))
+
 
     def showASCII(self):
         """
@@ -357,74 +364,3 @@ class Diagram(object):
                 if draw:
                     print("%s.\t(%s) [%s] %s"%(i, niveau["energy"], occupation, occupiedSymbol ))
 
-    # def getStateByBandNumber(self, spin, index):
-        # if self.spin:
-            # configuration = self.getConfiguration()[spin]
-        # else:
-            # configuration = self.getConfiguration()
-        # for state in configuration:
-            # if float(state["number"]) == float(index):
-                # return state
-        # return None
-
-    # def getNLastMostEnergeticStatesWith(self, n, occupied=True):
-        # if self.spin:
-            # classified_states = []
-            # get = "both"
-            # j   = 1
-            # k   = 1
-            # # init = True
-            # for i in range(1,int(n)+1):
-                # if get == "1" or get == "both":
-                    # if get == "both":
-                        # self.vprint("init")
-                        # last         = self.getNthMostEnergeticStateWith(k, spin="2", occupied=occupied)
-                        # last["spin"] = "2";
-                        # spin_last    = "2"
-                        # k+=1;
-                    # new         = self.getNthMostEnergeticStateWith(j, spin="1", occupied=occupied)
-                    # new["spin"] = "1";
-                    # spin_new    = "1"
-                    # j+=1;
-                # else:
-                    # new         = self.getNthMostEnergeticStateWith(k, spin="2", occupied=occupied)
-                    # new["spin"] = "2";
-                    # spin_new    = "2"
-                    # k+=1;
-                # self.vprint("new %s"%new)
-                # self.vprint("last %s"%last)
-                # if self._geq(new, last):
-                    # classified_states.append(new)
-                    # get  = spin_new
-                # else:
-                    # self.vprint("change")
-                    # classified_states.append(last)
-                    # last      = new
-                    # get       = spin_last
-                    # spin_last = spin_new
-            # return classified_states
-        # else:
-            # classified_states = [];
-            # for i in range(1, int(n)+1):
-                # classified_states.append(self.getNthMostEnergeticStateWith(i,occupied=occupied))
-            # return classified_states
-
-    # def getAllLastNStates(self, down_offset, up_offset=0):
-        # if self.spin:
-            # last      = self.getNLastMostEnergeticStatesWith(n,occupied=True)[0]
-            # lastIndex = last["number"]
-            # # now get everything down_offset underneath
-            # result_states = []
-            # for i in range(0,down_offset+1):
-                # newIndex = int(lastIndex) - i
-                # for spin in ["1", "2"]:
-                # newState          = self.getStateByBandNumber(spin, newIndex);
-                # newState["spin" ] = spin
-                # result_states.append(newState)
-        # for i in range(1,up_offset+1):
-            # newIndex = int(lastIndex) + i
-            # for spin in ["1", "2"]:
-                # newState          = self.getStateByBandNumber(spin, newIndex);
-                    # newState["spin" ] = spin
-                    # result_states.append(newState)
-            # return result_states
