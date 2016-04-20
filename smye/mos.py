@@ -60,10 +60,15 @@ struct state {
   };
   void init(real e, real s, real o, real b){
     energy     = e;
+    if (spin == 0 ){
+      occupation = o;
+    }
+    else{
     if ( o<0.5 ) {
       occupation = 0;
     } else {
       occupation = 1;
+    }
     }
     band       = b;
     spin       = s;
@@ -99,7 +104,8 @@ struct state {
     if ( spin != 0 ) {
       draw_spin();
     } else{
-      if (occupation==0){
+      real OCCUPATION_CUTOFF=0.1;
+      if (occupation<=OCCUPATION_CUTOFF){
         style=blue;
       }
     }
@@ -118,8 +124,8 @@ label(LUMO_TITLE, (25, 100+KANTEN_HEIGHT/1.1), 0.8*blue);
 draw((50,0)--(50,100),dashed, Arrows);
 label((string)(ENERGIE_LB_PRISTINE-ENERGIE_VB_PRISTINE)+" eV", (50,50), Fill(white));
 
-label("Leitungsband" , (IMG_WIDTH/2 , OBERKANTE+(KANTEN_HEIGHT)/2));
-label("Valenzband"   , (IMG_WIDTH/2 , (UNTERKANTE-KANTEN_HEIGHT)/2));
+//label("Leitungsband" , (IMG_WIDTH/2 , OBERKANTE+(KANTEN_HEIGHT)/2));
+//label("Valenzband"   , (IMG_WIDTH/2 , (UNTERKANTE-KANTEN_HEIGHT)/2));
 
 path UNTERKANTE_BOX = box((0 , UNTERKANTE) , (IMG_WIDTH , UNTERKANTE - KANTEN_HEIGHT));
 path OBERKANTE_BOX  = box((0 , OBERKANTE)  , (IMG_WIDTH , OBERKANTE + KANTEN_HEIGHT));
@@ -155,11 +161,12 @@ for ( int i = 0; i < UNEXCITED_ENERGIES.length; i+=1 ) {
   s.init(UNEXCITED_ENERGIES[i], UNEXCITED_SPINS[i], UNEXCITED_OCCUPATION[i], UNEXCITED_BANDS[i]);
   s.X_COORD=0+controller*(s.DASH_WIDTH);
   if ( controller == 0 ) {
-    label((string)s.energy, (s.X_COORD,s.value), W, 0.5*white);
+    label((string)s.energy, (s.X_COORD,s.value), W, red);
   } else {
-    label((string)s.energy, (s.X_COORD+s.DASH_WIDTH,s.value), E, 0.5*white);
+    label((string)s.energy, (s.X_COORD+s.DASH_WIDTH, s.value), E, red);
   }
-  label(scale(.5)*(string)s.band, s.getMiddlePoint(), 0.7*white);
+  label(scale(1)*(string)s.band, s.getMiddlePoint() - (s.DASH_WIDTH/4, 0), black);
+  label(scale(1)*(string)s.occupation, s.getMiddlePoint()+ (s.DASH_WIDTH/4, 0), black);
   s.draw();
 
 }
