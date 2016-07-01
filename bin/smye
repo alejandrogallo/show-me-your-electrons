@@ -86,7 +86,7 @@ if args.all:
         diagram.printStatesAboutFermiLevel(down_offset, up_offset)
 
 if args.get_spin:
-    print("SPIN=%s"%diagram.getNettoSpin())
+    print("SPIN=%1.5f"%diagram.getNettoSpin())
 
 if args.ascii:
     smye.printv("Displaying contents of %s in ascii"%args.file, title="CLI")
