@@ -281,6 +281,27 @@ class Diagram(object):
         self.vprint("Getting \033[0;36mHOMO\033[0m")
         return self.getNthMostEnergeticState(1, occupied=True)
 
+    def getNettoSpin(self):
+        """
+        This sums the spin numbers of the array states
+        and gives the netto spin of the system.
+
+        :states: Array of states
+        :returns: Spin
+
+        """
+        SPIN_1=0
+        SPIN_2=0
+        if not self.spin:
+            raise Exception("To get the spin a polarised calcultion must be performed")
+        self.vprint("Calculating netto spin")
+        spin1=self.getOccupiedStates(spin="1")
+        spin2=self.getOccupiedStates(spin="2")
+        for state in spin1:
+            SPIN_1+=float(state["occupation"])
+        for state in spin2:
+            SPIN_2+=float(state["occupation"])
+        return abs(SPIN_1-SPIN_2)
     def getLumo(self):
         self.vprint("Getting \033[0;36mLUMO\033[0m")
         return self.getNthLeastEnergeticState(1, occupied=False)

@@ -35,6 +35,7 @@ parser.add_argument("-a", "--all", help="Get n_up and n_down states about the fe
 parser.add_argument("--no-spin", help="Parse information from no polarised calculations", action="store_true")
 parser.add_argument("--asy", help="Print orbitals around the Fermi level using Asymptote program. It works in conjunction with the -a/--all flags, these determine which orbitals about the Fermi level are chosen. This commands outputs an asymptote script, which you can convert to pdf using: 'asy -f pdf <name_of_the_script>'. You can pass to the --extra flag Leitungs- and Valenzband values together with a title for the plot. Example: smye OUTCAR --all 10 10 --asy --extra 17.231 18.23 'This is my example' ", action="store_true")
 parser.add_argument("--extra", help="Extra flag for additional arguments for some commands", nargs="+", action="store")
+parser.add_argument("--get-spin", help="Get Spin of the electronic configuration", action="store_true")
 
 
 args = parser.parse_args()
@@ -83,6 +84,9 @@ if args.all:
         up_offset = down_offset
     if not args.asy:
         diagram.printStatesAboutFermiLevel(down_offset, up_offset)
+
+if args.get_spin:
+    print("SPIN=%s"%diagram.getNettoSpin())
 
 if args.ascii:
     smye.printv("Displaying contents of %s in ascii"%args.file, title="CLI")
