@@ -301,7 +301,7 @@ class Diagram(object):
             SPIN_1+=float(state["occupation"])
         for state in spin2:
             SPIN_2+=float(state["occupation"])
-        return abs(SPIN_1-SPIN_2)
+        return abs(SPIN_1-SPIN_2)/2
     def getLumo(self):
         self.vprint("Getting \033[0;36mLUMO\033[0m")
         return self.getNthLeastEnergeticState(1, occupied=False)
