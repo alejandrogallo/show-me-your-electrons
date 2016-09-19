@@ -43,6 +43,7 @@ unitsize(.2cm);
 
 
 struct state {
+  static int state_count;
   real energy;
   real occupation;
   real band;
@@ -66,6 +67,7 @@ struct state {
     this.band       = band;
     this.spin       = spin;
     this.value      = getPlottingValue();
+    state_count    += 1;
   };
   bool isOccupied(){
     if ( occupation >= OCCUPATION_CUTOFF ) {
@@ -200,7 +202,7 @@ for ( int i = 0; i < UNEXCITED_ENERGIES.length; i+=1 ) {
 real pointsToEnergy ( real point ){
   return (ENERGIE_LB_PRISTINE-ENERGIE_VB_PRISTINE)*point/100 + ENERGIE_VB_PRISTINE;
 };
-int steps = 5;
+int steps = 2;
 real width = 100/steps;
 
 // Bandgap
