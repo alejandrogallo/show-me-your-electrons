@@ -32,10 +32,10 @@ real UNTERKANTE    = 0;
 real IMG_WIDTH     = 50;
 real KANTEN_HEIGHT = 20;
 
-real[] UNEXCITED_ENERGIES=%s;
-real[] UNEXCITED_SPINS=%s;
-real[] UNEXCITED_OCCUPATION=%s;
-real[] UNEXCITED_BANDS=%s;
+real[] UNEXCITED_ENERGIES   = %s;
+real[] UNEXCITED_SPINS      = %s;
+real[] UNEXCITED_OCCUPATION = %s;
+real[] UNEXCITED_BANDS      = %s;
 
 //size(5cm,5cm);
 unitsize(.2cm);
@@ -58,21 +58,28 @@ struct state {
     real val = 100*(energy - VB)/(LB-VB);
     return val + Y_OFFSET;
   };
-  void init(real e, real s, real o, real b){
-    energy     = e;
+  void init(real energy, real s, real occupation, real b){
+    this.energy     = energy;
     if (spin == 0 ){
-      occupation = o;
+      this.occupation = occupation;
     }
     else{
-    if ( o<0.5 ) {
-      occupation = 0;
+    if ( occupation<0.5 ) {
+      this.occupation = 0;
     } else {
-      occupation = 1;
+      this.occupation = 1;
     }
     }
-    band       = b;
-    spin       = s;
-    value      = getPlottingValue();
+    this.band       = band;
+    this.spin       = spin;
+    this.value      = getPlottingValue();
+  };
+  bool isOccupied(){
+    if ( occupation >=0.5 ) {
+      return true;
+    } else {
+      return false;
+    }
   };
   pair getMiddlePoint (  ){
     real x,y;
@@ -86,7 +93,7 @@ struct state {
     real x_deviation = 0.25*DASH_WIDTH;
     real height = 5*DASH_HEIGHT;
     pen unoccupied_style = 0.7*white+dashed, occupied_style = black, style;
-    if ( occupation == 1 ) {
+    if ( isOccupied() ) {
       style = occupied_style;
     } else {
       style = unoccupied_style;
@@ -170,5 +177,8 @@ for ( int i = 0; i < UNEXCITED_ENERGIES.length; i+=1 ) {
   s.draw();
 
 }
+
+// vim: nospell
+
 """%(title, LB, VB, energies, spins, occupations, bands, "%")
 
