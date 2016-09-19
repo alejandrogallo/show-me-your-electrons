@@ -167,7 +167,7 @@ filldraw(UNTERKANTE_BOX , bandStyle, bandStyle);
 
 for ( int i = 0; i < UNEXCITED_ENERGIES.length; i+=1 ) {
   int controller;
-  if ( i%s2 == 0 ) {
+  if ( i%%2 == 0 ) {
     controller = 0;
   } else {
     controller = 1;
@@ -221,10 +221,10 @@ for ( int i = 0; i <= steps; i+=1 ) {
 }
 
 // vim: nospell
-//vim-run: asy -f pdf % && mupdf $(basename % .asy).pdf &
+//vim-run: asy -f pdf %% && mupdf $(basename %% .asy).pdf &
 //vim-run: asy -batchView
 
 
 
-"""%(title, LB, VB, energies, spins, occupations, bands, "%")
+"""%(title, LB, VB, energies, spins, occupations, bands)
 
