@@ -11,15 +11,20 @@ def MOS_ASYMPTOTE(states, LB="17.2450", VB="13.0207", title="Title", draw_band=F
     occupations = "{"
     bands       = "{"
 
-    for j,state in enumerate(states):
-        if j == len(states)-1:
-            separator="}"
-        else:
-            separator=", "
-        energies+=str(state["energy"])+separator
-        spins+=str(state["spin"])+separator
-        occupations+=str(state["occupation"])+separator
-        bands+=str(state["number"])+separator
+    STATES_STRING=""
+    for state in states:
+        energy     = str(state["energy"])
+        spin       = str(state["spin"])
+        occupation = str(state["occupation"])
+        band       = str(state["number"])
+        STATES_STRING+="""\
+//energy, spin, occupation, band
+state(%s, %s, %s, %s)
+.setAutoPosition()
+.draw( draw_band       = DRAW_BAND,
+    draw_occupation = DRAW_OCCUPATION,
+    draw_energy     = DRAW_ENERGY
+);\n\n"""%(energy, spin, occupation, band)
     return """
 
 string LUMO_TITLE="%s";
@@ -31,11 +36,6 @@ real OBERKANTE     = 100;
 real UNTERKANTE    = 0;
 real IMG_WIDTH     = 50;
 real KANTEN_HEIGHT = 20;
-
-real[] UNEXCITED_ENERGIES   = %s;
-real[] UNEXCITED_SPINS      = %s;
-real[] UNEXCITED_OCCUPATION = %s;
-real[] UNEXCITED_BANDS      = %s;
 
 bool DRAW_ENERGY     = %s;
 bool DRAW_BAND       = %s;
@@ -62,7 +62,7 @@ struct state {
     real val = 100*(energy - VB)/(LB-VB);
     return val + Y_OFFSET;
   };
-  void init(real energy, real spin, real occupation, real band){
+  void operator init(real energy, real spin, real occupation, real band){
     this.energy     = energy;
     this.occupation = occupation;
     this.band       = band;
@@ -83,9 +83,10 @@ struct state {
     y = value + (DASH_HEIGHT)/2;
     return (x,y);
   };
-  void setAutoPosition (){
+  state setAutoPosition (){
     int controller = state_count%%2;
     X_COORD=0+controller*(DASH_WIDTH);
+    return this;
   };
   bool  isLeft (){
     if ( getMiddlePoint().x >= IMG_WIDTH/2 ) {
@@ -116,14 +117,15 @@ struct state {
       return position + (0,height/2) -- position - (0,height/2);
     }
   };
-  void draw_energy (){
+  state draw_energy (){
     if ( isLeft() ) {
       label((string)energy, (X_COORD,value), W, red);
     } else {
       label((string)energy, (X_COORD+DASH_WIDTH, value), E, red);
     }
+    return this;
   };
-  void draw_spin(){
+  state draw_spin(){
     pen style;
     real height          = 2*DASH_HEIGHT;
     pen unoccupied_style = 0.7*white+dashed;
@@ -135,8 +137,9 @@ struct state {
     }
     path spinArrow = getSpinArrow();
     draw(spinArrow, linewidth(3)+style,Arrow(15));
+    return this;
   };
-  void draw (
+  state draw (
       bool draw_band       = false,
       bool draw_occupation = true,
       bool draw_energy     = true
@@ -159,7 +162,7 @@ struct state {
       label(scale(1)*(string)occupation , getSpinPosition(!isUp()) , black);
     if ( draw_energy ) draw_energy();
     if ( spin != 0 ) draw_spin();
-
+    return this;
   };
 };
 
@@ -185,35 +188,14 @@ filldraw(UNTERKANTE_BOX , bandStyle, bandStyle);
 
 
 
-/***************/
-/* DRAW STATES */
-/***************/
+/* DRAW STATES {{{1 */
+/********************/
 
-for ( int i = 0; i < UNEXCITED_ENERGIES.length; i+=1 ) {
+%s
 
-  state s;
-
-  s.init(
-      UNEXCITED_ENERGIES[i],
-      UNEXCITED_SPINS[i],
-      UNEXCITED_OCCUPATION[i],
-      UNEXCITED_BANDS[i]
-  );
-
-  s.setAutoPosition();
-
-  s.draw(
-      draw_band       = DRAW_BAND,
-      draw_occupation = DRAW_OCCUPATION,
-      draw_energy     = DRAW_ENERGY
-  );
-
-}
-
-
-//-----------
-//-  SCALE  -
-//-----------
+//---------------
+//-  SCALE  {{{1-
+//---------------
 
 real pointsToEnergy ( real point ){
   return (ENERGIE_LB_PRISTINE-ENERGIE_VB_PRISTINE)*point/100 + ENERGIE_VB_PRISTINE;
@@ -246,12 +228,9 @@ for ( int i = 0; i <= steps; i+=1 ) {
 """%(title,
         LB,
         VB,
-        energies,
-        spins,
-        occupations,
-        bands,
         str(draw_energy).lower(),
         str(draw_band).lower(),
-        str(draw_occupation).lower()
+        str(draw_occupation).lower(),
+        STATES_STRING
         )
 
