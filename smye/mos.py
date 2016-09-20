@@ -1,5 +1,5 @@
 
-def MOS_ASYMPTOTE(states, LB="17.2450", VB="13.0207", title="Title"):
+def MOS_ASYMPTOTE(states, LB="17.2450", VB="13.0207", title="Title", draw_band=False, draw_occupation=False, draw_energy=False):
     """
 
     :states: TODO
@@ -37,10 +37,11 @@ real[] UNEXCITED_SPINS      = %s;
 real[] UNEXCITED_OCCUPATION = %s;
 real[] UNEXCITED_BANDS      = %s;
 
-//size(5cm,5cm);
-unitsize(.2cm);
-//unitsize(.1cm);
+bool DRAW_ENERGY     = %s;
+bool DRAW_BAND       = %s;
+bool DRAW_OCCUPATION = %s;
 
+unitsize(.2cm);
 
 struct state {
   static int state_count;
@@ -82,6 +83,18 @@ struct state {
     y = value + (DASH_HEIGHT)/2;
     return (x,y);
   };
+  void setAutoPosition (){
+    int controller = state_count%%2;
+    X_COORD=0+controller*(DASH_WIDTH);
+  };
+  bool  isLeft (){
+    if ( getMiddlePoint().x >= IMG_WIDTH/2 ) {
+      return false;
+    }
+    else{
+      return true;
+    }
+  };
   bool isUp (){   return spin == 1?true:false; };
   bool isDown (){ return spin == 2?true:false; };
   pair getSpinPosition (bool up=false){
@@ -103,6 +116,13 @@ struct state {
       return position + (0,height/2) -- position - (0,height/2);
     }
   };
+  void draw_energy (){
+    if ( isLeft() ) {
+      label((string)energy, (X_COORD,value), W, red);
+    } else {
+      label((string)energy, (X_COORD+DASH_WIDTH, value), E, red);
+    }
+  };
   void draw_spin(){
     pen style;
     real height          = 2*DASH_HEIGHT;
@@ -118,7 +138,8 @@ struct state {
   };
   void draw (
       bool draw_band       = false,
-      bool draw_occupation = true
+      bool draw_occupation = true,
+      bool draw_energy     = true
       ){
     pen style = red;
     real OCCUPATION_CUTOFF=0.1;
@@ -130,12 +151,13 @@ struct state {
           (X_COORD,value)
           ,(X_COORD+DASH_WIDTH,value+DASH_HEIGHT)
           ),
-        style,style*.7
+        style,style*0
         );
     if ( draw_band )
       label(scale(1)*(string)band       , getMiddlePoint() - (DASH_WIDTH/4 , 0) , black);
     if ( draw_occupation && occupation != 0)
       label(scale(1)*(string)occupation , getSpinPosition(!isUp()) , black);
+    if ( draw_energy ) draw_energy();
     if ( spin != 0 ) draw_spin();
 
   };
@@ -168,12 +190,6 @@ filldraw(UNTERKANTE_BOX , bandStyle, bandStyle);
 /***************/
 
 for ( int i = 0; i < UNEXCITED_ENERGIES.length; i+=1 ) {
-  int controller;
-  if ( i%%2 == 0 ) {
-    controller = 0;
-  } else {
-    controller = 1;
-  }
 
   state s;
 
@@ -184,13 +200,13 @@ for ( int i = 0; i < UNEXCITED_ENERGIES.length; i+=1 ) {
       UNEXCITED_BANDS[i]
   );
 
-  s.X_COORD=0+controller*(s.DASH_WIDTH);
-  if ( controller == 0 ) {
-    label((string)s.energy, (s.X_COORD,s.value), W, red);
-  } else {
-    label((string)s.energy, (s.X_COORD+s.DASH_WIDTH, s.value), E, red);
-  }
-  s.draw();
+  s.setAutoPosition();
+
+  s.draw(
+      draw_band       = DRAW_BAND,
+      draw_occupation = DRAW_OCCUPATION,
+      draw_energy     = DRAW_ENERGY
+  );
 
 }
 
@@ -227,6 +243,15 @@ for ( int i = 0; i <= steps; i+=1 ) {
 //vim-run: asy -batchView
 
 
-
-"""%(title, LB, VB, energies, spins, occupations, bands)
+"""%(title,
+        LB,
+        VB,
+        energies,
+        spins,
+        occupations,
+        bands,
+        str(draw_energy).lower(),
+        str(draw_band).lower(),
+        str(draw_occupation).lower()
+        )
 
