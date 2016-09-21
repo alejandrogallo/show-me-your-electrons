@@ -108,7 +108,7 @@ struct state {
     return this;
   };
   state setAutoPosition (){
-    int controller = state_count%2;
+    int controller = state_count%%2;
     X_COORD=0+controller*(DASH_WIDTH);
     return this;
   };
