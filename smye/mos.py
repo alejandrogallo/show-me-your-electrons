@@ -26,6 +26,7 @@ state(%s, %s, %s, %s)
     draw_energy     = DRAW_ENERGY
 );\n\n"""%(energy, spin, occupation, band)
     return """
+currentpen = fontsize(20);
 
 string LUMO_TITLE="%s";
 
