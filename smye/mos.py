@@ -49,6 +49,8 @@ struct state {
   real occupation;
   real band;
   real value;
+  pen color;
+  pen spin_color;
   string title           = "";
   real spin              = 0;
   real VB                = ENERGIE_VB_PRISTINE;
@@ -62,6 +64,28 @@ struct state {
     real val = 100*(energy - VB)/(LB-VB);
     return val + Y_OFFSET;
   };
+  bool isOccupied(){
+    if ( occupation >= OCCUPATION_CUTOFF ) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+  state setStyle(){
+    if ( isOccupied() ) {
+      color = red;
+    } else {
+      color = gray;
+    }
+    pen unoccupied_style = 0.7*white+dashed;
+    pen occupied_style   = black;
+    if ( isOccupied() ) {
+      spin_color = occupied_style+linewidth(3);
+    } else {
+      spin_color = unoccupied_style+linewidth(3);
+    }
+    return this;
+  };
   void operator init(real energy, real spin, real occupation, real band){
     this.energy     = energy;
     this.occupation = occupation;
@@ -69,13 +93,7 @@ struct state {
     this.spin       = spin;
     this.value      = getPlottingValue();
     state_count    += 1;
-  };
-  bool isOccupied(){
-    if ( occupation >= OCCUPATION_CUTOFF ) {
-      return true;
-    } else {
-      return false;
-    }
+    setStyle();
   };
   pair getMiddlePoint (  ){
     real x,y;
@@ -126,17 +144,8 @@ struct state {
     return this;
   };
   state draw_spin(){
-    pen style;
-    real height          = 2*DASH_HEIGHT;
-    pen unoccupied_style = 0.7*white+dashed;
-    pen occupied_style   = black;
-    if ( isOccupied() ) {
-      style = occupied_style;
-    } else {
-      style = unoccupied_style;
-    }
     path spinArrow = getSpinArrow();
-    draw(spinArrow, linewidth(3)+style,Arrow(15));
+    draw(spinArrow, spin_color,Arrow(15));
     return this;
   };
   state draw (
@@ -144,17 +153,12 @@ struct state {
       bool draw_occupation = true,
       bool draw_energy     = true
       ){
-    pen style = red;
-    real OCCUPATION_CUTOFF=0.1;
-    if (occupation<=OCCUPATION_CUTOFF){
-      style=gray;
-    }
     filldraw(
         box(
           (X_COORD,value)
           ,(X_COORD+DASH_WIDTH,value+DASH_HEIGHT)
           ),
-        style,style*0
+        color,color*0
         );
     if ( draw_band )
       label(scale(1)*(string)band       , getMiddlePoint() - (DASH_WIDTH/4 , 0) , black);
