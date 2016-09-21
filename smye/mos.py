@@ -51,14 +51,18 @@ struct state {
   real value;
   pen color;
   pen spin_color;
-  string title           = "";
-  real spin              = 0;
-  real VB                = ENERGIE_VB_PRISTINE;
-  real LB                = ENERGIE_LB_PRISTINE;
-  real DASH_WIDTH        = 25;
-  real DASH_HEIGHT       = 1.8;
-  real X_COORD           = 0;
-  real Y_OFFSET          = 0;
+  pen spin_occupied_color   = black;
+  pen spin_unoccupied_color = 0.7*white+dashed;
+  pen occupied_color   = red;
+  pen unoccupied_color = gray;
+  string title         = "";
+  real spin            = 0;
+  real VB              = ENERGIE_VB_PRISTINE;
+  real LB              = ENERGIE_LB_PRISTINE;
+  real DASH_WIDTH      = 25;
+  real DASH_HEIGHT     = 1.8;
+  real X_COORD         = 0;
+  real Y_OFFSET        = 0;
   real OCCUPATION_CUTOFF = 0.1;
   real getPlottingValue (){
     real val = 100*(energy - VB)/(LB-VB);
@@ -72,18 +76,14 @@ struct state {
     }
   };
   state setStyle(){
-    if ( isOccupied() ) {
-      color = red;
+    real parameter;
+    if ( spin != 0 ) {
+      parameter = occupation;
     } else {
-      color = gray;
+      parameter = occupation/2;
     }
-    pen unoccupied_style = 0.7*white+dashed;
-    pen occupied_style   = black;
-    if ( isOccupied() ) {
-      spin_color = occupied_style+linewidth(3);
-    } else {
-      spin_color = unoccupied_style+linewidth(3);
-    }
+    color = parameter*occupied_color+(1-parameter)*unoccupied_color;
+    spin_color = parameter*spin_occupied_color+(1-parameter)*spin_unoccupied_color+linewidth(3);
     return this;
   };
   void operator init(real energy, real spin, real occupation, real band){
@@ -107,7 +107,7 @@ struct state {
     return this;
   };
   state setAutoPosition (){
-    int controller = state_count%%2;
+    int controller = state_count%2;
     X_COORD=0+controller*(DASH_WIDTH);
     return this;
   };
