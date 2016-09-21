@@ -101,6 +101,11 @@ struct state {
     y = value + (DASH_HEIGHT)/2;
     return (x,y);
   };
+  state setColors (pen color, pen spin_color=this.spin_color){
+    this.color = color;
+    this.spin_color = spin_color;
+    return this;
+  };
   state setAutoPosition (){
     int controller = state_count%%2;
     X_COORD=0+controller*(DASH_WIDTH);
