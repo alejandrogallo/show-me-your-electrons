@@ -8,9 +8,9 @@ import argparse
 #  ADDITIONAL INFORMATION  #
 ############################
 
-SETUP_INFO  = smye.SETUP_INFO
+SETUP_INFO = smye.SETUP_INFO
 DESCRIPTION = SETUP_INFO["description"]
-EPILOG      = """
+EPILOG = """
 
 This program is maintained by %s at %s.
 
@@ -23,24 +23,117 @@ This program is maintained by %s at %s.
 
 parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
 
-parser.add_argument("--version", help="Print version and exit", action="store_true")
-parser.add_argument("-v", "--verbose", help="Make the output verbose", action="store_true")
-parser.add_argument("--ascii", help="Print the electron configuration in ascii format", action="store_true")
-parser.add_argument("file", help="Input file (in OUTCAR format)", default=None, nargs="?")
-parser.add_argument("-g", "--gap", help="Get band gap", action="store_true")
-parser.add_argument("-n", "--excited", help="Get nth excited energy (from Fermi level). If the integer is negative, then the nth first unoccupied level is provided. Example: smye OUTCAR -n 1 2 3 -1 -10 (Gives the first, second and third level below the fermi level and the first and tenth levels above it)", type=int, nargs="+", action="store")
-parser.add_argument("-s", "--spin", help="Together with -n, spin channel (1 or 2)",   action="store")
-parser.add_argument("-t", "--test", help="For testing",   action="store_true")
-parser.add_argument("-a", "--all", help="Get n_up and n_down states about the fermi level. Example: -a 4 10 (4 occupied and 10 unoccupied)",   type=int, nargs="+", action="store")
-parser.add_argument("--no-spin", help="Parse information from no polarised calculations", action="store_true")
-
-
-parser.add_argument("--asy", help="Print orbitals around the Fermi level using Asymptote program. It works in conjunction with the -a/--all flags, these determine which orbitals about the Fermi level are chosen. This commands outputs an asymptote script, which you can convert to pdf using: 'asy -f pdf <name_of_the_script>'. You can pass to the --extra flag Leitungs- and Valenzband values together with a title for the plot. Example: smye OUTCAR --all 10 10 --asy --extra 17.231 18.23 'This is my example' ", action="store_true")
-parser.add_argument("--draw-energy",     help ="Draw the energy in the plots", action="store_true", default=False);
-parser.add_argument("--draw-band",       help ="Draw the band in the plots", action="store_true", default=False);
-parser.add_argument("--draw-occupation", help ="Draw the occupation in the plots", action="store_true", default=False);
-parser.add_argument("--extra",           help ="Extra flag for additional arguments for some commands", nargs="+", action="store")
-parser.add_argument("--get-spin",        help ="Get Spin of the electronic configuration", action="store_true")
+parser.add_argument(
+    "--version",
+    help="Print version and exit",
+    action="store_true"
+)
+parser.add_argument(
+    "-v",
+    "--verbose",
+    help="Make the output verbose",
+    action="store_true"
+)
+parser.add_argument(
+    "--ascii",
+    help="Print the electron configuration in ascii format",
+    action="store_true"
+)
+parser.add_argument(
+    "file",
+    help="Input file (in OUTCAR format)",
+    default=None,
+    nargs="?"
+)
+parser.add_argument(
+    "-g",
+    "--gap",
+    help="Get band gap",
+    action="store_true"
+)
+parser.add_argument(
+    "-n",
+    "--excited",
+    help="""\
+    Get nth excited energy (from Fermi level). If the integer is negative, then
+    the nth first unoccupied level is provided. Example: smye OUTCAR -n 1 2 3
+    -1 -10 (Gives the first, second and third level below the fermi level and
+    the first and tenth levels above it)
+    """,
+    type=int,
+    nargs="+",
+    action="store"
+)
+parser.add_argument(
+    "-s",
+    "--spin",
+    help="Together with -n, spin channel (1 or 2)",
+    action="store"
+)
+parser.add_argument(
+    "-t",
+    "--test",
+    help="For testing",
+    action="store_true"
+)
+parser.add_argument(
+    "-a",
+    "--all",
+    help="""\
+    Get n_up and n_down states about the fermi level. Example: -a 4 10 (4
+    occupied and 10 unoccupied)
+    """,
+    type=int,
+    nargs="+",
+    action="store"
+)
+parser.add_argument(
+    "--no-spin",
+    help="Parse information from no polarised calculations",
+    action="store_true"
+)
+parser.add_argument(
+    "--asy",
+    help="""\
+    Print orbitals around the Fermi level using Asymptote program. It works in
+    conjunction with the -a/--all flags, these determine which orbitals about
+    the Fermi level are chosen. This commands outputs an asymptote script,
+    which you can convert to pdf using: 'asy -f pdf <name_of_the_script>'. You
+    can pass to the --extra flag Leitungs- and Valenzband values together with
+    a title for the plot. Example: smye OUTCAR --all 10 10 --asy --extra 17.231
+    18.23 'This is my example'
+    """,
+    action="store_true"
+)
+parser.add_argument(
+    "--draw-energy",
+    help ="Draw the energy in the plots",
+    action="store_true",
+    default=False
+)
+parser.add_argument(
+    "--draw-band",
+    help ="Draw the band in the plots",
+    action="store_true",
+    default=False
+)
+parser.add_argument(
+    "--draw-occupation",
+    help ="Draw the occupation in the plots",
+    action="store_true",
+    default=False
+)
+parser.add_argument(
+    "--extra",
+    help ="Extra flag for additional arguments for some commands",
+    nargs="+",
+    action="store"
+)
+parser.add_argument(
+    "--get-spin",
+    help ="Get Spin of the electronic configuration",
+    action="store_true"
+)
 
 
 args = parser.parse_args()
@@ -74,11 +167,11 @@ else:
     sys.exit(1)
 
 if args.test:
-    smye.printv(diagram.getLastOccuppiedStates("1"), title="CLI");
-    smye.printv(diagram.getLastOccuppiedStates("2"), title="CLI");
+    smye.printv(diagram.getLastOccuppiedStates("1"), title="CLI")
+    smye.printv(diagram.getLastOccuppiedStates("2"), title="CLI")
     if args.excited:
-        smye.printv(diagram.getNthExcitedState(args.excited, "1"), title="CLI");
-        smye.printv(diagram.getNthExcitedState(args.excited, "2"), title="CLI");
+        smye.printv(diagram.getNthExcitedState(args.excited, "1"), title="CLI")
+        smye.printv(diagram.getNthExcitedState(args.excited, "2"), title="CLI")
     sys.exit(0)
 
 if args.all:
@@ -98,7 +191,7 @@ if args.ascii:
     diagram.showASCII()
 
 if args.gap:
-    diagram.getBandGap();
+    diagram.getBandGap()
 
 if args.excited and args.spin:
     smye.printv("both", title="CLI")
@@ -109,17 +202,20 @@ else:
 if args.asy:
     smye.printv("Outputing asymptote script")
     if not args.all:
-        raise Exception("You need to provide -a/--all down_offset up_offset to work with this command")
+        raise Exception(
+            "You need to provide -a/--all down_offset up_offset to work with this command"
+        )
         sys.exit(1)
     states = diagram.getStatesAboutFermiLevel(down_offset, up_offset)
     if args.extra:
         extra_args = args.extra
     else:
         extra_args = []
-    diagram.mosAsymptote(states,
-            *extra_args,
-            draw_energy = args.draw_energy,
-            draw_band = args.draw_band,
-            draw_occupation = args.draw_occupation
-            )
+    diagram.mosAsymptote(
+        states,
+        *extra_args,
+        draw_energy = args.draw_energy,
+        draw_band = args.draw_band,
+        draw_occupation = args.draw_occupation
+    )
 
