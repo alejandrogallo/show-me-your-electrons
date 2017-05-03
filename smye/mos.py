@@ -1,3 +1,4 @@
+import string
 
 def MOS_ASYMPTOTE(
         states,
@@ -22,11 +23,11 @@ def MOS_ASYMPTOTE(
     if not bandgap:
         VB = max([s["energy"] for s in states])
         LB = min([s["energy"] for s in states])
-        draw_band_gap = "true"
+        draw_band_gap = "false"
     else:
         VB = bandgap[1]
         LB = bandgap[0]
-        draw_band_gap = "false"
+        draw_band_gap = "true"
     for state in states:
         energy = str(state["energy"])
         spin = str(state["spin"])
@@ -36,26 +37,28 @@ def MOS_ASYMPTOTE(
 //energy, spin, occupation, band
 state(%s, %s, %s, %s)
 .setAutoPosition()
-.draw( draw_band       = DRAW_BAND,
+.draw(
+    draw_band = DRAW_BAND,
     draw_occupation = DRAW_OCCUPATION,
-    draw_energy     = DRAW_ENERGY
+    draw_energy = DRAW_ENERGY
 );\n\n"""%(energy, spin, occupation, band)
-    return """
+    return string.Template("""
 currentpen = fontsize(20);
 
-string LUMO_TITLE = "{title}";
+string LUMO_TITLE = "$title";
 
-real ENERGIE_LB_PRISTINE = {LB};
-real ENERGIE_VB_PRISTINE = {VB};
+real ENERGIE_LB_PRISTINE = $LB;
+real ENERGIE_VB_PRISTINE = $VB;
 
 real OBERKANTE = 100;
 real UNTERKANTE = 0;
 real IMG_WIDTH = 50;
 real KANTEN_HEIGHT = 20;
 
-bool DRAW_ENERGY = {draw_energy};
-bool DRAW_BAND = {draw_band};
-bool DRAW_OCCUPATION = {draw_occupation};
+bool DRAW_ENERGY = $draw_energy;
+bool DRAW_BAND = $draw_band;
+bool DRAW_BAND_GAB = $draw_band_gap;
+bool DRAW_OCCUPATION = $draw_occupation;
 
 unitsize(.2cm);
 
@@ -213,14 +216,14 @@ filldraw(UNTERKANTE_BOX , bandStyle, bandStyle);
 
 
 
-/* DRAW STATES {{{1 */
-/********************/
+/* DRAW STATES */
+/***************/
 
-{states}
+$states
 
-//---------------
-//-  SCALE  {{{1-
-//---------------
+//-----------
+//-  SCALE  -
+//-----------
 
 real pointsToEnergy ( real point ){
   return (ENERGIE_LB_PRISTINE-ENERGIE_VB_PRISTINE)*point/100 + ENERGIE_VB_PRISTINE;
@@ -246,18 +249,14 @@ for ( int i = 0; i <= steps; i+=1 ) {
 }
 
 // vim: nospell
-//vim-run: asy -f pdf %% && mupdf $(basename %% .asy).pdf &
-//vim-run: asy -batchView
-
-
-""" .format(
+""").safe_substitute(
     title=title,
     LB=LB,
     VB=VB,
     draw_energy=str(draw_energy).lower(),
+    draw_band_gap=str(draw_band_gap).lower(),
     draw_band=str(draw_band).lower(),
     draw_occupation=str(draw_occupation).lower(),
-    states=STATES_STRING,
-    draw_band_gap=draw_band_gap
+    states=STATES_STRING
 )
 
