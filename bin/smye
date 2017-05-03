@@ -118,6 +118,14 @@ parser.add_argument(
     default=False
 )
 parser.add_argument(
+    "--draw-band-gap",
+    help ="Draw the band gap in the plots",
+    action="store",
+    nargs=2,
+    default=None,
+    type=float
+)
+parser.add_argument(
     "--draw-occupation",
     help ="Draw the occupation in the plots",
     action="store_true",
@@ -213,7 +221,7 @@ if args.asy:
         extra_args = []
     diagram.mosAsymptote(
         states,
-        *extra_args,
+        bandgap=args.draw_band_gap,
         draw_energy = args.draw_energy,
         draw_band = args.draw_band,
         draw_occupation = args.draw_occupation

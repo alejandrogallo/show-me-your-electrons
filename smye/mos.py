@@ -1,5 +1,12 @@
 
-def MOS_ASYMPTOTE(states, LB="17.2450", VB="13.0207", title="Title", draw_band=False, draw_occupation=False, draw_energy=False):
+def MOS_ASYMPTOTE(
+        states,
+        bandgap=None,
+        title="Title",
+        draw_band=False,
+        draw_occupation=False,
+        draw_energy=False
+        ):
     """
 
     :states: TODO
@@ -12,12 +19,20 @@ def MOS_ASYMPTOTE(states, LB="17.2450", VB="13.0207", title="Title", draw_band=F
     bands       = "{"
 
     STATES_STRING=""
+    if not bandgap:
+        VB = max([s["energy"] for s in states])
+        LB = min([s["energy"] for s in states])
+        draw_band_gap = "true"
+    else:
+        VB = bandgap[1]
+        LB = bandgap[0]
+        draw_band_gap = "false"
     for state in states:
-        energy     = str(state["energy"])
-        spin       = str(state["spin"])
+        energy = str(state["energy"])
+        spin = str(state["spin"])
         occupation = str(state["occupation"])
-        band       = str(state["number"])
-        STATES_STRING+="""\
+        band = str(state["number"])
+        STATES_STRING += """\
 //energy, spin, occupation, band
 state(%s, %s, %s, %s)
 .setAutoPosition()
@@ -28,19 +43,19 @@ state(%s, %s, %s, %s)
     return """
 currentpen = fontsize(20);
 
-string LUMO_TITLE="%s";
+string LUMO_TITLE = "{title}";
 
-real ENERGIE_LB_PRISTINE   = %s ;
-real ENERGIE_VB_PRISTINE   = %s ;
+real ENERGIE_LB_PRISTINE = {LB};
+real ENERGIE_VB_PRISTINE = {VB};
 
-real OBERKANTE     = 100;
-real UNTERKANTE    = 0;
-real IMG_WIDTH     = 50;
+real OBERKANTE = 100;
+real UNTERKANTE = 0;
+real IMG_WIDTH = 50;
 real KANTEN_HEIGHT = 20;
 
-bool DRAW_ENERGY     = %s;
-bool DRAW_BAND       = %s;
-bool DRAW_OCCUPATION = %s;
+bool DRAW_ENERGY = {draw_energy};
+bool DRAW_BAND = {draw_band};
+bool DRAW_OCCUPATION = {draw_occupation};
 
 unitsize(.2cm);
 
@@ -52,18 +67,18 @@ struct state {
   real value;
   pen color;
   pen spin_color;
-  pen spin_occupied_color   = black;
+  pen spin_occupied_color = black;
   pen spin_unoccupied_color = 0.7*white+dashed;
-  pen occupied_color   = red;
+  pen occupied_color = red;
   pen unoccupied_color = gray;
-  string title         = "";
-  real spin            = 0;
-  real VB              = ENERGIE_VB_PRISTINE;
-  real LB              = ENERGIE_LB_PRISTINE;
-  real DASH_WIDTH      = 25;
-  real DASH_HEIGHT     = 1.8;
-  real X_COORD         = 0;
-  real Y_OFFSET        = 0;
+  string title = "";
+  real spin = 0;
+  real VB = ENERGIE_VB_PRISTINE;
+  real LB = ENERGIE_LB_PRISTINE;
+  real DASH_WIDTH = 25;
+  real DASH_HEIGHT = 1.8;
+  real X_COORD = 0;
+  real Y_OFFSET = 0;
   real OCCUPATION_CUTOFF = 0.1;
   real getPlottingValue (){
     real val = 100*(energy - VB)/(LB-VB);
@@ -88,11 +103,11 @@ struct state {
     return this;
   };
   void operator init(real energy, real spin, real occupation, real band){
-    this.energy     = energy;
+    this.energy = energy;
     this.occupation = occupation;
-    this.band       = band;
-    this.spin       = spin;
-    this.value      = getPlottingValue();
+    this.band = band;
+    this.spin = spin;
+    this.value = getPlottingValue();
     state_count    += 1;
     setStyle();
   };
@@ -124,7 +139,7 @@ struct state {
   bool isDown (){ return spin == 2?true:false; };
   pair getSpinPosition (bool up=false){
     real x_deviation = 0.25*DASH_WIDTH;
-    pair middle      = getMiddlePoint();
+    pair middle = getMiddlePoint();
     if (up) {
       return (middle - (-x_deviation,0));
     } else {
@@ -155,9 +170,9 @@ struct state {
     return this;
   };
   state draw (
-      bool draw_band       = false,
+      bool draw_band = false,
       bool draw_occupation = true,
-      bool draw_energy     = true
+      bool draw_energy = true
       ){
     filldraw(
         box(
@@ -186,7 +201,7 @@ struct state {
 label(LUMO_TITLE, (25, 100+KANTEN_HEIGHT/1.1), 0.8*blue);
 
 path UNTERKANTE_BOX = box((0 , UNTERKANTE) , (IMG_WIDTH , UNTERKANTE - KANTEN_HEIGHT));
-path OBERKANTE_BOX  = box((0 , OBERKANTE)  , (IMG_WIDTH , OBERKANTE + KANTEN_HEIGHT));
+path OBERKANTE_BOX = box((0 , OBERKANTE)  , (IMG_WIDTH , OBERKANTE + KANTEN_HEIGHT));
 
 pen bandStyle = .8*white;
 filldraw(OBERKANTE_BOX  , bandStyle, bandStyle);
@@ -201,7 +216,7 @@ filldraw(UNTERKANTE_BOX , bandStyle, bandStyle);
 /* DRAW STATES {{{1 */
 /********************/
 
-%s
+{states}
 
 //---------------
 //-  SCALE  {{{1-
@@ -235,12 +250,14 @@ for ( int i = 0; i <= steps; i+=1 ) {
 //vim-run: asy -batchView
 
 
-"""%(title,
-        LB,
-        VB,
-        str(draw_energy).lower(),
-        str(draw_band).lower(),
-        str(draw_occupation).lower(),
-        STATES_STRING
-        )
+""" .format(
+    title=title,
+    LB=LB,
+    VB=VB,
+    draw_energy=str(draw_energy).lower(),
+    draw_band=str(draw_band).lower(),
+    draw_occupation=str(draw_occupation).lower(),
+    states=STATES_STRING,
+    draw_band_gap=draw_band_gap
+)
 
